@@ -1,2 +1,7 @@
-*.zip
-.DS_Store
+_*.html
+_shots_*
+_upload.*
+_upload.log
+_pages_*
+_probe_*
+*.tmp
