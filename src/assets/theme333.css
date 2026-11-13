@@ -1,0 +1,233 @@
+/* ============================================================
+   333 教育综合背书房 · 主题皮肤 + 新栏目组件
+   复用政治站的设计语言（卡片化、圆角 16、柔和投影），
+   配色换成「墨绿 + 赤金」的学术色。
+   ============================================================ */
+
+:root {
+  --red: #0f6e5c;
+  --red-2: #0a4f42;
+  --red-soft: #e7f3ef;
+  --gold: #c08a2e;
+  --gold-soft: #fbf2df;
+  --purple: #6b5b95;
+  --blue: #2b6ea6;
+  --green: #1f9d6b;
+  --orange: #d2761f;
+}
+
+body {
+  background:
+    radial-gradient(1200px 480px at 100% -10%, rgba(192,138,46,.12), transparent 60%),
+    radial-gradient(900px 420px at -10% 0%, rgba(15,110,92,.10), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+.topbar {
+  background: linear-gradient(120deg, #0f6e5c 0%, #0a4f42 100%);
+  box-shadow: 0 4px 18px rgba(8,64,53,.30);
+}
+.topbar::after {
+  background: linear-gradient(90deg, var(--gold), #e8c07a, var(--gold));
+}
+
+/* ---- 首页小卡 ---- */
+.k3-quick {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+.k3-quick-card {
+  display: block; text-align: left; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 15px 16px;
+  box-shadow: var(--shadow); transition: transform .18s var(--ease), box-shadow .18s var(--ease);
+  font: inherit; color: inherit;
+}
+.k3-quick-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-h); }
+.k3-quick-card .k3q-ic { font-size: 22px; line-height: 1; }
+.k3-quick-card .k3q-t { font-weight: 800; margin-top: 8px; font-size: 15px; }
+.k3-quick-card .k3q-d { font-size: 12px; color: var(--ink-soft); margin-top: 3px; line-height: 1.5; }
+.k3-quick-card .k3q-n { float: right; font-size: 12px; color: var(--red); font-weight: 800; }
+
+/* ---- 法案表格 ---- */
+.bill-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.bill-country {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); margin-bottom: 16px; overflow: hidden;
+  animation: viewIn .32s var(--ease) both;
+}
+.bill-country-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; cursor: pointer;
+  background: linear-gradient(180deg, #f7faf9, #fff);
+  border-bottom: 1px solid var(--line-2);
+}
+.bill-country-head .flag {
+  width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+  background: var(--red-soft); color: var(--red-2); font-weight: 900; font-size: 13px;
+}
+.bill-country-head h3 { font-size: 15px; flex: 1; }
+.bill-country-head .cnt { font-size: 12px; color: var(--ink-soft); }
+.bill-country-head .arrow { transition: transform .2s var(--ease); color: var(--ink-soft); font-size: 12px; }
+.bill-country.open .arrow { transform: rotate(90deg); }
+.bill-country-body { display: none; }
+.bill-country.open .bill-country-body { display: block; }
+
+.bill-row {
+  display: grid; grid-template-columns: 190px 1fr; gap: 0;
+  border-bottom: 1px solid var(--line-2);
+}
+.bill-row:last-child { border-bottom: none; }
+.bill-name {
+  padding: 12px 14px; background: #fbfcfb; border-right: 1px solid var(--line-2);
+  font-weight: 700; font-size: 13.5px; line-height: 1.5;
+}
+.bill-name .yr {
+  display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 700;
+  color: var(--red-2); background: var(--red-soft); border-radius: 999px; padding: 1px 8px;
+}
+.bill-name .star { color: var(--gold); font-size: 13px; margin-left: 2px; }
+.bill-body { padding: 12px 14px; font-size: 13.5px; }
+.bill-body .lbl {
+  font-size: 11px; font-weight: 800; letter-spacing: .5px;
+  color: var(--ink-soft); margin-right: 6px;
+}
+.bill-body p { margin: 0 0 6px; }
+.bill-body p:last-child { margin-bottom: 0; }
+.bill-body .impact { color: #2b4f46; background: #f4faf7; border-left: 3px solid var(--green); padding: 6px 9px; border-radius: 6px; }
+.bill-body .warn { color: #8a3a12; background: #fdf4ec; border-left: 3px solid var(--orange); padding: 6px 9px; border-radius: 6px; }
+.bill-body .mnemo { color: #6a4a10; background: var(--gold-soft); border-radius: 6px; padding: 6px 9px; }
+
+/* ---- 200 题卡片 ---- */
+.q-list { display: flex; flex-direction: column; gap: 10px; }
+.qcard {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow); overflow: hidden; transition: box-shadow .18s var(--ease);
+}
+.qcard:hover { box-shadow: var(--shadow-h); }
+.qcard-head {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; cursor: pointer;
+}
+.qcard-no {
+  flex: 0 0 auto; min-width: 34px; height: 24px; padding: 0 7px; border-radius: 7px;
+  background: var(--red-soft); color: var(--red-2); font-weight: 800; font-size: 12px;
+  display: grid; place-items: center;
+}
+.qcard-title { flex: 1; font-size: 14px; font-weight: 700; line-height: 1.55; }
+.qcard-title .tag {
+  display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+  background: var(--gold-soft); color: #8a6416; margin-left: 6px; vertical-align: 1px;
+}
+.qcard-title .tag.must { background: #fdECEA; color: #a3352a; }
+.qcard-open { flex: 0 0 auto; font-size: 12px; color: var(--ink-soft); padding-top: 3px; }
+.qcard-body { display: none; padding: 0 14px 14px 58px; font-size: 13.5px; }
+.qcard.open .qcard-body { display: block; animation: viewIn .25s var(--ease) both; }
+.qcard-sec { margin-top: 10px; }
+.qcard-sec > .h {
+  font-size: 11.5px; font-weight: 800; letter-spacing: .6px; color: var(--red-2);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
+}
+.qcard-sec > .h::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.qcard-sec ul { margin: 0; padding-left: 18px; }
+.qcard-sec li { margin: 3px 0; line-height: 1.68; }
+.qcard-sec .frame {
+  background: #f7faf9; border: 1px dashed #cfe3dc; border-radius: 8px; padding: 8px 11px;
+  font-size: 13px; color: #2c4f46;
+}
+.qcard-sec .score { display: flex; flex-wrap: wrap; gap: 6px; }
+.qcard-sec .score span {
+  font-size: 12px; background: var(--gold-soft); color: #7d5a13;
+  border-radius: 6px; padding: 2px 8px;
+}
+.qcard-sec .note { font-size: 12.5px; color: var(--ink-soft); }
+
+/* ---- 材料题 / 方法卡 ---- */
+.mcard {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 15px 17px; margin-bottom: 14px;
+  animation: viewIn .32s var(--ease) both;
+}
+.mcard h3 { font-size: 15.5px; margin-bottom: 8px; }
+.mcard .lead { font-size: 13.5px; color: var(--ink-soft); }
+.mcard ol, .mcard ul { margin: 8px 0 0; padding-left: 20px; font-size: 13.5px; }
+.mcard li { margin: 4px 0; line-height: 1.7; }
+
+.step-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.step-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 13px 15px; box-shadow: var(--shadow); position: relative;
+}
+.step-card .n {
+  position: absolute; top: -9px; left: 13px; background: var(--red); color: #fff;
+  font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 9px; letter-spacing: .5px;
+}
+.step-card h4 { font-size: 13.5px; margin: 7px 0 5px; }
+.step-card p { font-size: 12.5px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+
+/* ---- 法案选择题 ---- */
+.quiz-shell { max-width: 780px; }
+.quiz-prog { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
+.quiz-q {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px; font-size: 15px; font-weight: 600; line-height: 1.7;
+}
+.quiz-opts { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+.quiz-opt {
+  text-align: left; font: inherit; font-size: 14px; cursor: pointer;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 11px 14px; transition: border-color .15s, background .15s, transform .15s;
+}
+.quiz-opt:hover { border-color: var(--red); background: var(--red-soft); }
+.quiz-opt.right { border-color: var(--green); background: #eaf8f1; font-weight: 700; }
+.quiz-opt.wrong { border-color: #d9534f; background: #fdeeed; }
+.quiz-opt .key { font-weight: 800; margin-right: 8px; color: var(--red-2); }
+.quiz-exp {
+  margin-top: 13px; font-size: 13.5px; background: #f7faf9; border-left: 3px solid var(--green);
+  border-radius: 8px; padding: 10px 13px; line-height: 1.72;
+}
+.quiz-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+/* ---- 表格里的关键词彩标（沿用政治站的配色语义） ---- */
+.k-md { color: #a3352a; font-weight: 700; }   /* 易错 / 硬点 */
+.k-gold { color: #8a6416; background: var(--gold-soft); border-radius: 4px; padding: 0 3px; }
+.k-blue { color: #1f5b8f; font-weight: 700; }
+.k-teal { color: #0d6b57; font-weight: 700; }
+
+/* ---- 考点「含义 / 要求」两栏 ---- */
+.k3-point-body { padding: 2px 0 2px 16px; }
+.k3-sec { margin-top: 8px; }
+.k3-lbl {
+  display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .8px;
+  color: #fff; background: var(--blue); border-radius: 5px; padding: 1px 7px; margin-bottom: 4px;
+}
+.k3-lbl.req { background: var(--gold); }
+.k3-tip {
+  margin-top: 8px; font-size: 12.5px; color: #6a4a10; background: var(--gold-soft);
+  border-radius: 8px; padding: 6px 10px; line-height: 1.6;
+}
+.k3-req li::marker { color: var(--gold); }
+
+/* ---- 划线关键词（＊）与「遮词盲背」 ---- */
+.k-star {
+  background: linear-gradient(transparent 62%, rgba(192,138,46,.30) 62%);
+  border-radius: 2px; padding: 0 1px;
+}
+body.hide-star .k-star {
+  color: transparent; text-shadow: 0 0 9px rgba(28,34,48,.55);
+  background: var(--red-soft); border-radius: 3px; user-select: none; cursor: pointer;
+}
+body.hide-star .k-star.revealed { color: inherit; text-shadow: none; background: var(--gold-soft); }
+.hide-star-btn {
+  font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  border: 1px dashed var(--red); color: var(--red); background: #fff;
+  border-radius: 999px; padding: 5px 13px; margin-left: 8px;
+}
+.hide-star-btn.active { background: var(--red); color: #fff; border-style: solid; }
+
+/* ---- 移动端微调 ---- */
+@media (max-width: 720px) {
+  .bill-row { grid-template-columns: 1fr; }
+  .bill-name { border-right: none; border-bottom: 1px dashed var(--line-2); }
+  .qcard-body { padding-left: 14px; }
+}
