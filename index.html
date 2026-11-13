@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>333 背书房 · 教育综合考研离线背书 / 刷题一体站</title>
+<meta name="description" content="1324 个考点、4204 道题、17 套真题整卷。安卓 APK 与单文件 HTML 双形态，完全离线、开源免费。">
+<meta property="og:title" content="333 背书房 · 考研教育综合离线站">
+<meta property="og:description" content="1324 考点 · 4204 题 · 17 套真题整卷，一个 APK 或一个 HTML 文件，不联网就能背。">
+<meta property="og:image" content="docs/cover.png">
+<style>
+  :root{
+    --bg:#f6f9ff; --card:#fff; --ink:#13233d; --ink2:#4a5d7a; --ink3:#7c8aa5;
+    --line:#e2ebf7; --blue:#2f6fdb; --blue2:#1749a6; --gold:#e0a63c; --red:#d64545;
+    --shadow:0 10px 30px rgba(29,74,145,.08);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.7;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.4) blur(10px);
+      background:rgba(246,249,255,.86);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:22px;height:58px}
+  nav .logo{font-weight:800;color:var(--blue2);font-size:16px}
+  nav a{color:var(--ink2);font-size:14px}
+  nav a:hover{color:var(--blue)}
+  nav .sp{flex:1}
+  /* hero */
+  header{position:relative;overflow:hidden;padding:74px 0 54px;
+    background:radial-gradient(1000px 420px at 18% -10%,#dceaff 0%,transparent 60%),
+               radial-gradient(800px 380px at 92% 0%,#eaf2ff 0%,transparent 55%)}
+  header h1{font-size:44px;line-height:1.25;margin:0 0 14px;letter-spacing:-.5px}
+  header h1 em{font-style:normal;color:var(--blue)}
+  .sub{font-size:17px;color:var(--ink2);max-width:660px;margin:0 0 8px}
+  .sub b{color:var(--ink)}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 26px}
+  .badge{font-size:12.5px;padding:4px 11px;border-radius:99px;background:#fff;border:1px solid var(--line);
+    color:var(--ink2);box-shadow:0 1px 2px rgba(20,50,100,.04)}
+  .badge b{color:var(--blue2)}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:12px;font-weight:650;
+    font-size:15px;transition:transform .15s ease, box-shadow .15s ease}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,#3b7ef0,#1f57c0);color:#fff;box-shadow:0 10px 22px rgba(47,111,219,.28)}
+  .btn.ghost{background:#fff;color:var(--blue2);border:1px solid #cfe0f8;box-shadow:var(--shadow)}
+  .btn.small{padding:9px 16px;font-size:14px;border-radius:10px}
+  .hint{font-size:13px;color:var(--ink3);margin-top:14px}
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:44px 0 8px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+  .stat b{display:block;font-size:26px;color:var(--blue2);letter-spacing:-.5px}
+  .stat span{font-size:13px;color:var(--ink3)}
+  /* sections */
+  section{padding:56px 0}
+  h2{font-size:26px;margin:0 0 8px;letter-spacing:-.3px}
+  .lead{color:var(--ink2);margin:0 0 26px;font-size:15px}
+  .shots{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .shot{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  .shot img{width:100%;display:block}
+  .shot figcaption{font-size:13px;color:var(--ink3);padding:10px 14px;border-top:1px solid var(--line)}
+  /* features */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .card .ic{font-size:22px}
+  .card h3{font-size:16px;margin:8px 0 6px}
+  .card p{margin:0;font-size:14px;color:var(--ink2)}
+  /* table */
+  .tablewrap{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{padding:12px 18px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:#f2f7ff;color:var(--blue2);font-weight:650}
+  tr:last-child td{border-bottom:0}
+  td.n{font-variant-numeric:tabular-nums;color:var(--ink2)}
+  /* contact */
+  .contact{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:stretch}
+  .panel{background:linear-gradient(135deg,#1b3a6b,#2f6fdb);color:#fff;border-radius:18px;padding:26px;box-shadow:0 16px 34px rgba(30,70,140,.25)}
+  .panel h2{color:#fff;margin:0 0 8px}
+  .panel p{color:#d6e4fb;margin:0 0 16px;font-size:14.5px}
+  .panel .row{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:10px;font-size:14px}
+  .side{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+  .side h3{margin:0 0 10px;font-size:16px}
+  .side ul{margin:0;padding-left:18px;color:var(--ink2);font-size:14px}
+  .side li{margin:6px 0}
+  footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--ink3);font-size:13px}
+  .star{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #ffe2a8;
+    color:#8a5b16;padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:var(--shadow)}
+  @media (max-width:860px){
+    header h1{font-size:32px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .shots,.grid{grid-template-columns:1fr 1fr}
+    .contact{grid-template-columns:1fr}
+  }
+  @media (max-width:560px){
+    .shots,.grid{grid-template-columns:1fr}
+    nav .wrap{gap:12px;overflow-x:auto}
+    header{padding:48px 0 34px}
+  }
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <span class="logo">📘 333 背书房</span>
+  <a href="#features">功能</a>
+  <a href="#shots">截图</a>
+  <a href="#data">数据</a>
+  <a href="#contact">联系</a>
+  <span class="sp"></span>
+  <a class="btn ghost small" href="333beishufang-tablet.html">立即使用</a>
+  <a class="btn primary small" href="https://github.com/Jason-Dyf/333-beishufang/releases/latest">下载 APK</a>
+</div></nav>
+
+<header><div class="wrap">
+  <h1>333 教育综合<br><em>背得进、刷得动</em>的离线工具</h1>
+  <p class="sub">
+    <b>1324 个考点、4204 道题、17 套真题整卷</b>，装进一个 APK 或一个 HTML 文件里。
+    不联网、不注册、不收集任何数据，打开就能背。
+  </p>
+  <div class="badges">
+    <span class="badge"><b>1324</b> 考点</span>
+    <span class="badge"><b>4204</b> 选择题</span>
+    <span class="badge"><b>17</b> 套整卷</span>
+    <span class="badge"><b>22</b> 本教材原文</span>
+    <span class="badge">完全离线</span>
+    <span class="badge">开源 MIT</span>
+  </div>
+  <div class="cta">
+    <a class="btn primary" href="333beishufang-tablet.html">▶ 在线打开（免安装）</a>
+    <a class="btn ghost" href="https://github.com/Jason-Dyf/333-beishufang/releases/latest">⬇ 下载 APK（4.5 MB）</a>
+    <a class="btn ghost" href="https://github.com/Jason-Dyf/333-beishufang">GitHub 源码</a>
+  </div>
+  <p class="hint">网页版首次加载约 14.5 MB，建议 Wi-Fi 下打开；装 APK 可完全离线，速度最快。</p>
+
+  <div class="stats">
+    <div class="stat"><b>1324</b><span>考点 · 39 章</span></div>
+    <div class="stat"><b>4204</b><span>选择题 · 6 个题库</span></div>
+    <div class="stat"><b>17</b><span>整卷 · 含 3 年真题</span></div>
+    <div class="stat"><b>0.3s</b><span>单文件首屏加载</span></div>
+  </div>
+</div></header>
+
+<section id="shots"><div class="wrap">
+  <h2>长这样</h2>
+  <p class="lead">手机、平板、电脑都能用；深色模式、横竖屏都调过。</p>
+  <div class="shots">
+    <figure class="shot"><img src="screenshots/home.png" alt="首页"><figcaption>首页：今日任务 + 复习队列</figcaption></figure>
+    <figure class="shot"><img src="screenshots/onepage-blank.png" alt="一页纸"><figcaption>一页纸：挖空自测</figcaption></figure>
+    <figure class="shot"><img src="screenshots/zhenti.png" alt="真题整卷"><figcaption>真题整卷：30 单选 + 2 论述 + 4 材料</figcaption></figure>
+    <figure class="shot"><img src="screenshots/q200.png" alt="冬青200题"><figcaption>冬青 200 题：点开看要点</figcaption></figure>
+    <figure class="shot"><img src="screenshots/home-dark.png" alt="深色模式"><figcaption>深色模式</figcaption></figure>
+    <figure class="shot"><img src="screenshots/onepage-tablet.png" alt="平板双栏"><figcaption>平板双栏一页纸</figcaption></figure>
+  </div>
+</div></section>
+
+<section id="features" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><div class="wrap">
+  <h2>六个真正用得上的功能</h2>
+  <p class="lead">不是把 PDF 塞进浏览器，是按「背 → 练 → 测 → 查」重新做的。</p>
+  <div class="grid">
+    <div class="card"><div class="ic">📖</div><h3>按章背，背完打勾</h3><p>39 章 1324 考点，框架 / 要点 / 关键词分层；打勾后按 1→3→7→15 天自动回到首页复习队列。</p></div>
+    <div class="card"><div class="ic">✍️</div><h3>按老师拆题库</h3><p>冬青、丹丹、凯程、真题、模拟卷、法案，可整库刷也可只刷一章；错了自动归类，能只刷本章错题。</p></div>
+    <div class="card"><div class="ic">📄</div><h3>真题整卷还原</h3><p>2024 / 2025 / 2026 严格按考场结构；洪哥八套、丹丹六套模拟卷；任何题都能跳回原卷原题。</p></div>
+    <div class="card"><div class="ic">🗒</div><h3>333 一页纸</h3><p>模糊遮挡版 + 挖空自测版，考前随手翻；真题 / 大题 / 重点有徽标，支持缩放与打印。</p></div>
+    <div class="card"><div class="ic">🔍</div><h3>搜索给答案，不给链接</h3><p>按知识点分科目列原文，同义词自动扩展；命中真题标红，一键跳到原卷。</p></div>
+    <div class="card"><div class="ic">💾</div><h3>离线 + 可备份</h3><p>数据全在本机；热力图看掌握度，进度可导出 JSON，换平板/手机导入接着用。</p></div>
+  </div>
+</div></section>
+
+<section id="data"><div class="wrap">
+  <h2>数据底账</h2>
+  <p class="lead">所有数字都是真实入库的，不注水；OCR 缺行的地方会明确标注，不编造题目。</p>
+  <div class="tablewrap"><table>
+    <tr><th>项目</th><th>数量</th></tr>
+    <tr><td>考点</td><td class="n">1324（教原 383 / 中教史 373 / 外教史 274 / 教心 294）</td></tr>
+    <tr><td>选择题</td><td class="n">4204</td></tr>
+    <tr><td>　冬青 1200 / 丹丹 1000 / 凯程</td><td class="n">1151 / 1187 / 1332</td></tr>
+    <tr><td>　真题整卷 / 模拟卷 / 外教法案</td><td class="n">89 / 398 / 47</td></tr>
+    <tr><td>冬青 200 题 · 材料分析题</td><td class="n">196 · 67</td></tr>
+    <tr><td>整卷</td><td class="n">17 套（三年真题 + 洪哥八套 + 丹丹六套）</td></tr>
+    <tr><td>教材原文库</td><td class="n">22 本 · 约 5200 页</td></tr>
+    <tr><td>考点出处 / 考点↔题目联动</td><td class="n">1030 / 1324 · 679 个考点</td></tr>
+  </table></div>
+</div></section>
+
+<section id="contact" style="background:#fff;border-top:1px solid var(--line)"><div class="wrap">
+  <h2>关注与交流</h2>
+  <p class="lead">项目完全开源，代码、数据、打包方式都能自己改一份。</p>
+  <div class="contact">
+    <div class="panel">
+      <h2>一起把这件事做下去</h2>
+      <p>如果它帮到了你：点个 Star、关注抖音、或者来 QQ 聊聊你想加的功能。</p>
+      <div class="row">
+        <span class="pill">抖音：D_fo_ik_f_040124</span>
+        <span class="pill">QQ：2560283294</span>
+        <span class="pill">昵称：遗忘</span>
+      </div>
+      <p style="margin-top:16px;font-size:13.5px">资助 / 合作 / 定制：QQ 备注「333」即可。</p>
+    </div>
+    <div class="side">
+      <h3>怎么开始</h3>
+      <ul>
+        <li>安卓：下 APK，允许「未知来源」安装</li>
+        <li>平板 / 电脑：直接开网页版，或下 HTML 单文件</li>
+        <li>微信里打开会进预览模式，点「…」用浏览器打开</li>
+        <li>进度不自动同步，换设备用「备份 · 换设备」</li>
+      </ul>
+      <a class="star" href="https://github.com/Jason-Dyf/333-beishufang" style="margin-top:14px">⭐ 去 GitHub 点个 Star</a>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  333 背书房 · 个人学习工具，题目与教材版权归原作者及出版方所有，仅供个人复习使用，请勿商用。
+  <br>代码采用 MIT 协议 · <a href="https://github.com/Jason-Dyf/333-beishufang">GitHub</a>
+</div></footer>
+
+</body>
+</html>
