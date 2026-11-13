@@ -37,7 +37,8 @@
 | [`333beishufang-tablet.html`](333beishufang-tablet.html) | 14.5 MB | 任意浏览器，双击打开；iPad / 电脑 / 不想装 APK 时用 |
 | [`docs/manual.pdf`](docs/manual.pdf) | 0.9 MB | 图文说明书（安装、功能、语音、常见问题） |
 
-> 下载：点文件名 → 右上角 **Download raw file**。
+> **一键下载**：[Releases 页面](https://github.com/Jason-Dyf/333beishufang/releases/latest)（APK 与说明书 PDF 已挂在 v1.1.0）。
+> 单文件 HTML 在仓库根目录，点文件名 → 右上角 **Download raw file**。
 > 国内访问 GitHub 慢的话，可以先把仓库整个 `Code → Download ZIP` 下下来再解压。
 
 ## 界面
