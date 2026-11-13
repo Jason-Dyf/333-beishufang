@@ -157,6 +157,25 @@
 ### v1.0.0
 - 首个完整版本：4204 题、1324 考点、17 套整卷、错题本、热力图、今日任务、深色模式
 
+## 源码结构（想自己改一份？）
+
+```
+├── src/                       多文件站点源码（index.html + assets/app.js + assets/views-*.js + assets/data/*.js）
+├── tools/                     构建脚本：打单文件、重建数据
+│   ├── _tablet.js             node tools/_tablet.js → 生成单文件 HTML
+│   └── BUILD.md               构建与二次开发说明（含 APK 打包步骤）
+├── 333beishufang-tablet.html  打包好的单文件成品（14.5 MB）
+├── 333beishufang-1.1.0.apk    WebView 壳 + 单文件版内容（4.5 MB）
+├── docs/                      说明书 PDF/HTML、宣传文案
+└── screenshots/               README 用的界面截图
+```
+
+- 本地跑：双击 `src/index.html`，或 `cd src && python -m http.server 8000`
+- 打单文件：`node tools/_tablet.js`
+- 打 APK：见 [`tools/BUILD.md`](tools/BUILD.md)
+
+数据都在 `src/assets/data/` 里，纯 JS 对象，改题库或加考点不需要动逻辑。
+
 ## 关注与交流
 
 这是一个**完全开源**的项目：代码、构建脚本、数据整理方式都可以看、可以改、可以自己再打包一份。
