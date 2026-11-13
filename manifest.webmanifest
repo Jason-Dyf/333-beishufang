@@ -1,0 +1,16 @@
+{
+  "name": "333 背书房 · 教育综合",
+  "short_name": "333背书房",
+  "description": "1324 考点 · 4204 题 · 17 套整卷 · 完全离线",
+  "lang": "zh-CN",
+  "start_url": "./333beishufang-tablet.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#12315e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
