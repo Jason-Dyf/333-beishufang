@@ -14,6 +14,16 @@
 
 ⭐ **如果这个项目对你有用，点个 Star 再走** —— 这是我继续更新的最大动力。
 
+<p align="center">
+  <a href="https://jason-dyf.github.io/333-beishufang/"><img src="docs/cover.png" alt="333 背书房" width="860"></a>
+</p>
+
+<p align="center">
+  <a href="https://jason-dyf.github.io/333-beishufang/"><b>🌐 在线体验</b></a> ·
+  <a href="https://github.com/Jason-Dyf/333-beishufang/releases/latest"><b>⬇ 下载 APK</b></a> ·
+  <a href="333beishufang-tablet.html"><b>📄 单文件 HTML</b></a>
+</p>
+
 ---
 
 ## 这是什么
@@ -37,7 +47,7 @@
 | [`333beishufang-tablet.html`](333beishufang-tablet.html) | 14.5 MB | 任意浏览器，双击打开；iPad / 电脑 / 不想装 APK 时用 |
 | [`docs/manual.pdf`](docs/manual.pdf) | 0.9 MB | 图文说明书（安装、功能、语音、常见问题） |
 
-> **一键下载**：[Releases 页面](https://github.com/Jason-Dyf/333beishufang/releases/latest)（APK 与说明书 PDF 已挂在 v1.1.0）。
+> **一键下载**：[Releases 页面](https://github.com/Jason-Dyf/333-beishufang/releases/latest)（APK 与说明书 PDF 已挂在 v1.1.0）。
 > 单文件 HTML 在仓库根目录，点文件名 → 右上角 **Download raw file**。
 > 国内访问 GitHub 慢的话，可以先把仓库整个 `Code → Download ZIP` 下下来再解压。
 
