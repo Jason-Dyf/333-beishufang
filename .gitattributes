@@ -1,0 +1,5 @@
+*.html -text
+*.apk -text
+*.pdf -text
+*.png -text
+*.md text eol=lf

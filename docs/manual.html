@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>333 背书房 · 说明书</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #1f2a3a;
+    font-family: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+    font-size: 10.6pt; line-height: 1.75;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .cover {
+    border-left: 6px solid #2f6fd0; padding: 10px 0 8px 16px; margin-bottom: 18px;
+  }
+  .cover h1 { font-size: 24pt; margin: 0 0 6px; letter-spacing: 1px; color: #143a6b; }
+  .cover .pic { width: 56mm; border-radius: 10px; display: block; margin: 0 0 10px; border: 1px solid #dbe8fb; }
+  .cover .sub { color: #5b6b80; font-size: 10pt; }
+  .cover .tag {
+    display: inline-block; margin-top: 8px; background: #eaf2ff; color: #1d4f92;
+    border: 1px solid #c8ddfa; border-radius: 999px; padding: 2px 10px; font-size: 9pt;
+  }
+  h2 {
+    font-size: 13.5pt; color: #143a6b; margin: 18px 0 8px; padding-left: 10px;
+    border-left: 4px solid #2f6fd0; page-break-after: avoid;
+  }
+  h3 { font-size: 11pt; margin: 12px 0 4px; color: #22324a; page-break-after: avoid; }
+  p { margin: 4px 0; }
+  ul, ol { margin: 4px 0 6px 20px; padding: 0; }
+  li { margin: 3px 0; }
+  .muted { color: #66748a; }
+  .box {
+    background: #f6f9ff; border: 1px solid #dbe8fb; border-radius: 8px;
+    padding: 8px 12px; margin: 8px 0;
+  }
+  .box.warn { background: #fffaf2; border-color: #f1e0bf; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+  .kv { display: flex; gap: 8px; }
+  .kv b { flex: none; min-width: 64px; color: #143a6b; }
+  code {
+    font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.6pt;
+    background: #f0f4fa; border-radius: 4px; padding: 1px 5px; color: #22456f;
+  }
+  .foot {
+    margin-top: 20px; padding-top: 8px; border-top: 1px dashed #c9d6e8;
+    color: #7b8aa0; font-size: 9pt; text-align: center;
+  }
+  .nobreak { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <img class="pic" src="333背书房-封面.jpg" alt="封面">
+  <h1>333 背书房 · 说明书</h1>
+  <div class="sub">最后更新 2026-11-12　适用于 安卓 APK / 电脑 / 平板 / 手机 / iPad</div>
+  <div class="tag">离线可用 · APK + 网页双版 · 4204 题 · 17 套整卷</div>
+</div>
+
+<h2>一、30 秒上手</h2>
+<ol>
+  <li><b>电脑</b>：双击桌面「333背书房」快捷方式，或直接双击 <code>333背书房（平板版）.html</code>。</li>
+  <li><b>安卓手机 / 平板（推荐 APK）</b>：把 <code>333背书房.apk</code> 传到设备 → 点开安装（首次会提示「允许安装未知来源应用」，允许即可）→ 桌面出现「333背书房」图标，点开就用，完全离线。</li>
+  <li><b>安卓 / 苹果（网页版）</b>：把 <code>333背书房（平板版）.html</code> 存进设备 → 用 Chrome / Edge / Safari 打开 → 「添加到主屏幕」，以后像 App 一样点开。</li>
+  <li>完全离线可用；只有「语音识别抽查」需要联网（见第六节）。</li>
+</ol>
+<div class="box warn">
+  <b>别用微信内置浏览器打开。</b>微信里点开经常拿不到麦克风、也容易丢文件权限，会出现「加载失败 / 找不到文件」。存到手机后用 Chrome 或 Edge 打开最稳。
+</div>
+
+<h2>二、六个主入口（左侧栏 / 手机底部栏）</h2>
+<div class="grid">
+  <div class="kv"><b>首页</b><span>今日任务、该复习了、六个功能入口</span></div>
+  <div class="kv"><b>背书</b><span>1324 个考点，四科分章，点「标记掌握」打卡</span></div>
+  <div class="kv"><b>刷题</b><span>6 个题库，按章 / 随机 60 / 组卷 / 模考 / 错题</span></div>
+  <div class="kv"><b>真题</b><span>17 套整卷：30 选 + 2 论 + 4 材料</span></div>
+  <div class="kv"><b>一页纸</b><span>考点压成关键词，单科 2 栏，可打印</span></div>
+  <div class="kv"><b>听我背书</b><span>随机抽题，你背它听，打分 + 指出漏点</span></div>
+</div>
+<p class="muted">侧栏还有：冬青 200 题、材料题、外教法案、真题考点榜、背题方法、检查清单、闪卡、进度、备份 · 换设备。</p>
+
+<h2>三、每天怎么用（建议 40–60 分钟）</h2>
+<ul>
+  <li><b>早上 10 分钟</b>：首页「今日任务」，按它算的数背 / 刷 / 复习。</li>
+  <li><b>白天碎片</b>：一页纸遮词自测，或闪卡过一遍。</li>
+  <li><b>晚上 20 分钟</b>：先刷「错题本」本章错题，再随机 60 题。</li>
+  <li><b>睡前 10 分钟</b>：听我背书抽查 2–3 题，背不出的第二天重点看。</li>
+  <li><b>每周一次</b>：模考——30 道选择限时 40 分钟，或整套大题。</li>
+</ul>
+<p>规律：背完一定点「标记掌握」，1 / 3 / 7 / 15 天后首页会自动提醒复习。</p>
+
+<h2>四、刷题怎么刷</h2>
+<ul>
+  <li><b>题库</b>：冬青 1200 / 丹丹 1000 / 凯程 / 真题整卷 / 模拟冲刺卷 / 外教法案。</li>
+  <li><b>按章刷</b>：进题库 → 选章 → 开刷，做完立刻看解析。</li>
+  <li><b>随机 60 题</b>：整库乱序，用来检验；<b>随机组卷</b>：自己勾章节和题量。</li>
+  <li><b>错题本</b>：按「科目 → 章」聚类，可只刷本章错题；做错的题自动进来。</li>
+  <li><b>热力图</b>：每章按正确率上色，点格子直接开刷。</li>
+  <li><b>收藏 / 笔记</b>：题目右上角 ★ 和 ✎，自动进「收藏」「笔记」。</li>
+</ul>
+
+<h2>五、真题与搜索</h2>
+<p><b>真题整卷</b>：2024 / 2025 / 2026 各一套（30 选 + 2 论述 + 4 材料），外加洪哥八套、丹丹六套模拟卷。点「开刷这套单选」即可练，卷面题数与题库一致；原卷缺答案的题会标注「只能看题、不计分」。</p>
+<p><b>搜索</b>（顶部放大镜）：</p>
+<ul>
+  <li>结果按「科目 → 章」分组，每组最多 12 条，多了会提示你缩小范围。</li>
+  <li>优先显示标题命中的考点，不参考练习题和模拟题。</li>
+  <li>命中真题的条目<b>标红</b>，点「看原题 ▸」直接跳到那套卷那道题。</li>
+  <li>有「只搜教材」开关，可排除题册。</li>
+</ul>
+
+<h2>六、听我背书（老师抽查）</h2>
+<ol>
+  <li>侧栏「🎙 听我背书」→ 选来源（混合 / 大纲考点 / 200 题 / 整卷大题）→「🎲 抽一题开始」。</li>
+  <li>三种背法任选：
+    <ul>
+      <li><b>🎤 开始背（APK 里走安卓原生语音）</b>：点一下先弹麦克风授权，同意后直接开始听、边背边出文字，背完点「✅ 我背完了」判分。APK 会自动选最能用的一条路：①系统语音识别服务 → ②系统语音弹窗（很多机器上能调出「讯飞语记 / 小爱」的识别界面）→ ③都调不出来时提示装「讯飞语记」，并可用「🎧 录音回放」或「✍️ 打字默写」。</li>
+      <li><b>🎤 开始背（浏览器里）</b>：只有 <b>https 或 localhost</b> 打开的页面才允许麦克风；双击 HTML 打开的是 <code>file://</code>，安卓 Chrome / Edge 会一律拒绝麦克风（浏览器安全限制，不是软件 bug）。这时点「⌨️ 用键盘说话」，用<u>键盘上的 🎤 说话输入</u>，或直接打字默写，判分完全一样。</li>
+      <li><b>🎧 录音回放 / ✍️ 打字默写</b>：APK 里录音可回放自评；打字默写任何环境都能用，一样判分。</li>
+    </ul>
+  </li>
+  <li>背完点「✅ 我背完了」，给 0–100 分：≥85 很稳 / ≥70 基本会了 / ≥50 半熟 / ≥25 还生；打分 = 原文吻合 45% + 采分关键词覆盖 55%，并列「说到的采分点」「还差这些」和参考答案。</li>
+  <li>录音只存在本机、不上传；历史成绩本地保存，首页显示今日抽查数与平均分。</li>
+</ol>
+
+<h2>七、模考</h2>
+<ul>
+  <li><b>选择题模考</b>：从选定题库随机抽 30 道（四本书都覆盖），限时 40 分钟，交卷看分数与逐题解析。</li>
+  <li><b>大题模考</b>：随机抽论述 / 材料题，按分值给自己估分。</li>
+  <li><b>题库可选</b>：全部 / 冬青 / 丹丹 / 凯程 / 真题 / 模拟卷 / 法案；也可直接用某套模拟卷当模考卷。</li>
+  <li>中途切后台、刷新，倒计时和答题进度都不会丢。</li>
+</ul>
+
+<h2>八、一页纸（两个版本 × 两种模式）</h2>
+<ul>
+  <li><b>版本</b>：📘 大纲背书版（1324 个考点）/ 🧪 冬青200题自测版（196 道大题）。</li>
+  <li><b>🌫 模糊遮挡</b>：采分关键词糊住，点一下那行揭开，再点一次跳去背书页。</li>
+  <li><b>✏️ 挖空自测</b>：关键词变成横线，点横线填出答案；标题上带 <b>真题</b>（命中几道真题）/ <b>大题</b> / <b>重点</b> 标记；点标题可跳背书页。冬青版里每道题的要点先藏起来，点「看要点」核对。</li>
+  <li><b>放大</b>：右上 A− / A＋ 调整字号（80%–160%），小屏平板也看得清；四科合览自动多栏。</li>
+  <li>顶部章节 chips 一键滚到某章；搜索框按关键词过滤；打印时工具栏自动隐藏。</li>
+</ul>
+
+<h2>九、进度、备份、换设备</h2>
+<p>进度存在本机浏览器（localStorage），不上传服务器。换设备：旧设备「💾 备份 · 换设备」→ 导出 <code>333进度-日期.json</code> → 新设备同一入口 → 选文件导入 → 自动刷新。</p>
+<p>同一台设备刷新、切后台，页面 / 学科 / 正在做的题都会原样恢复。</p>
+
+<h2>十、常见问题</h2>
+<div class="nobreak">
+<p><b>Q　刷新后一片空白？</b><br>A　已修：刷新会自动恢复上次位置；真起不来时会显示「重新载入」按钮。若在微信里打开空白，改用 Chrome / Edge。</p>
+<p><b>Q　点「开始背」没反应？</b><br>A　语音识别要 Chrome / Edge + 联网 + 麦克风授权（地址栏左边锁图标里允许）。微信内置浏览器拿不到麦克风，会自动引导你用打字或录音。</p>
+<p><b>Q　选项显示「（此选项原卷扫描缺行）」？</b><br>A　原卷扫描缺行，宁可标注也不编造；答案与解析仍有效。</p>
+<p><b>Q　2024 第 26 题没有答案？</b><br>A　原卷答案解析缺页，页面标了「暂无答案与解析」，其余完整。</p>
+<p><b>Q　手机会不会横向溢出 / 卡？</b><br>A　已按 390 / 768 宽适配；单文件 15 MB，桌面实测加载约 0.35 秒，长列表分批渲染。</p>
+</div>
+
+<h2>十一、数据底账（截至 2026-11-11）</h2>
+<ul>
+  <li>考点 <b>1324</b> 条（39 章）：教原 383 / 中教史 373 / 外教史 274 / 教心 294。</li>
+  <li>选择题 <b>4204</b> 道：冬青 1151 · 丹丹 1187 · 凯程 1332 · 真题整卷 89 · 模拟卷 398 · 外教法案 47。</li>
+  <li>整卷 <b>17</b> 套（2024/2025/2026 + 洪哥八套 + 丹丹六套）。</li>
+  <li>冬青 200 题 196 张卡 · 材料题 67 · 法案 59 条 · 原文库 22 本（约 5200 页）· 出处标注 1030 条。</li>
+  <li>丹丹 / 冬青两套题已按「题干—解析」相似度逐题重新对齐，解析不再串题。</li>
+  <li>页面 25 个视图，自动测试 0 错误。</li>
+</ul>
+
+<h2>十二、快捷深链</h2>
+<div class="grid">
+  <div><code>#home</code> 首页　<code>#recite</code> 背书</div>
+  <div><code>#quiz</code> 刷题　<code>#zhenti</code> 真题列表</div>
+  <div><code>#zhenti/2026/c</code> 2026 真题 · 选择</div>
+  <div><code>#zhenti/hg1/e</code> 洪哥模考一 · 论述</div>
+  <div><code>#onepage</code> 一页纸　<code>#oral</code> 听我背书</div>
+  <div><code>#hot</code> 考点榜　<code>#q200</code> 冬青 200 题</div>
+  <div><code>#backup</code> 备份换设备</div>
+  <div><code>?theme=dark#quiz</code> 深色模式</div>
+</div>
+
+<div class="box" style="margin-top:14px">
+  <b>一句话版本：</b>早上看首页任务，白天翻一页纸，晚上刷错题，睡前抽查两道；背完点「标记掌握」，剩下的交给复习队列和真题考点榜。
+</div>
+
+<div class="foot">333 背书房 · 说明书 · 2026-11-11</div>
+
+</body>
+</html>
