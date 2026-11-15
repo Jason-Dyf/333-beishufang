@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#1e6fd9" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <title>333 教育综合背书房 · 刷题 · 考点 · 200 题</title>
   <meta name="description" content="333 教育综合背书站：大纲考点、刷题中心、外教史 59 法案、冬青 200 题、材料题 70 考点、教材原文出处检索。" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231e6fd9'/%3E%3Ctext x='32' y='45' font-size='38' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E教%3C/text%3E%3C/svg%3E" />
@@ -79,6 +81,11 @@
           <button class="navbtn" data-view="material70">🕳 材料题 70 考点</button>
         </div>
         <div class="nav-group">
+          <div class="nav-group-title">新增专栏</div>
+          <button class="navbtn" data-view="hotsp">🔥 教育热点 · 2026</button>
+          <button class="navbtn" data-view="mistakes">📕 错题总结 · 技巧</button>
+        </div>
+        <div class="nav-group">
           <div class="nav-group-title">数据</div>
           <button class="navbtn" data-view="backup">💾 备份 · 换设备</button>
         </div>
@@ -131,6 +138,7 @@
   <script src="assets/data/quiz.js"></script>
   <script src="assets/data/pointsrc.js"></script>
   <script src="assets/data/plink.js"></script>
+  <script src="assets/data/frames.js"></script>
   <script src="assets/data/zhenti-papers.js"></script>
   <script src="assets/data/mock-papers.js"></script>
   <!-- QUIZ_SCRIPTS -->
@@ -196,16 +204,30 @@
   <script src="assets/data/parts/p-xl3.js"></script>
   <script src="assets/data/parts/p-xl4.js"></script>
   <script src="assets/data/parts/p-xl5.js"></script>
+  <script src="assets/data/hotsp.js"></script>
+  <script src="assets/data/mistakes.js"></script>
   <script src="assets/data/qsrc.js"></script>
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
   <script src="assets/views-bills.js"></script>
   <script src="assets/views-q200.js"></script>
+  <script src="assets/views-hotsp.js"></script>
+  <script src="assets/views-mistakes.js"></script>
   <script src="assets/views-quiz.js"></script>
   <script src="assets/views-search.js"></script>
   <script src="assets/views-zhenti.js"></script>
   <script src="assets/views-onepage.js"></script>
   <script src="assets/views-hot.js"></script>
   <script src="assets/views-oral.js"></script>
+  <script>
+    /* PWA：在线版注册 Service Worker，file:// 打开时自动跳过 */
+    (function () {
+      try {
+        if (!("serviceWorker" in navigator)) return;
+        if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") return;
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

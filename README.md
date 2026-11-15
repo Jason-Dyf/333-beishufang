@@ -4,7 +4,7 @@
 > 不联网、不注册、不收集任何数据，打开就能背。
 
 <p>
-  <img alt="version" src="https://img.shields.io/badge/version-1.1.0-2f6fdb">
+  <img alt="version" src="https://img.shields.io/badge/version-1.2.0-2f6fdb">
   <img alt="questions" src="https://img.shields.io/badge/questions-4204-1aa260">
   <img alt="points" src="https://img.shields.io/badge/points-1324-e0a63c">
   <img alt="papers" src="https://img.shields.io/badge/papers-17-d64545">
@@ -43,13 +43,13 @@
 
 | 文件 | 大小 | 适用 |
 | --- | --- | --- |
-| [`333beishufang-1.1.0.apk`](333beishufang-1.1.0.apk) | 4.5 MB | 安卓手机 / 平板，装完即用，图标在桌面 |
+| [`333beishufang-1.2.0.apk`](333beishufang-1.2.0.apk) | 4.8 MB | 安卓手机 / 平板，装完即用，图标在桌面 |
 | [`333beishufang-tablet.html`](333beishufang-tablet.html) | 14.5 MB | 任意浏览器，双击打开；iPad / 电脑 / 不想装 APK 时用 |
 | [`docs/manual.pdf`](docs/manual.pdf) | 0.9 MB | 图文说明书（安装、功能、语音、常见问题） |
 
 > **一键下载**：
-> - Pages 直连：[333beishufang-1.1.0.apk](https://jason-dyf.github.io/333-beishufang/333beishufang-1.1.0.apk) · [说明书 PDF](https://jason-dyf.github.io/333-beishufang/docs/manual.pdf)
-> - Releases 页面：[v1.1.0](https://github.com/Jason-Dyf/333-beishufang/releases/latest)
+> - Pages 直连：[333beishufang-1.2.0.apk](https://jason-dyf.github.io/333-beishufang/333beishufang-1.2.0.apk) · [说明书 PDF](https://jason-dyf.github.io/333-beishufang/docs/manual.pdf)
+> - Releases 页面：[v1.2.0](https://github.com/Jason-Dyf/333-beishufang/releases/latest)
 > 单文件 HTML 在仓库根目录，点文件名 → 右上角 **Download raw file**。
 > 国内访问 GitHub 慢的话，可以先把仓库整个 `Code → Download ZIP` 下下来再解压。
 
@@ -136,7 +136,7 @@
 ## 快速开始
 
 ### 装 APK（推荐）
-1. 下载 `333beishufang-1.1.0.apk`，传到手机/平板
+1. 下载 `333beishufang-1.2.0.apk`，传到手机/平板
 2. 点击安装，系统提示「未知来源」时选**允许**
 3. 桌面出现「333背书房」，打开即可，全程不需要网络
 
@@ -170,6 +170,12 @@
 
 ## 更新日志
 
+### v1.2.0（2026-11）
+- 新增「错题总结 · 技巧」：学姐 13 周答疑抽出 47 条（错题 12 / 重点 26 / 技巧 4 / 热点 5），可按周与类别筛选、可搜索，红字为她原话加重
+- 新增「教育热点 · 2026」：14 个主题（出题角度 / 答题素材 / 关联考点）+ 20 道专项题 + 14 条选择题速记
+- 一页纸升级三种形态（框架图脑图 / 挖空自测 / 模糊遮挡），冬青 200 题骨架版
+- APK 内置系统语音桥（系统识别服务 / 识别 Activity 双路）
+
 ### v1.1.0（2026-11）
 - 一页纸重做：模糊遮挡 / 挖空自测两个版本 × 大纲背书 / 冬青 200 题两个内容源
 - 挖空版支持真题 / 大题 / 重点徽标，点一下填词，支持缩放
@@ -189,7 +195,7 @@
 │   ├── _tablet.js             node tools/_tablet.js → 生成单文件 HTML
 │   └── BUILD.md               构建与二次开发说明（含 APK 打包步骤）
 ├── 333beishufang-tablet.html  打包好的单文件成品（14.5 MB）
-├── 333beishufang-1.1.0.apk    WebView 壳 + 单文件版内容（4.5 MB）
+├── 333beishufang-1.2.0.apk    WebView 壳 + 单文件版内容（4.5 MB）
 ├── docs/                      说明书 PDF/HTML、宣传文案
 └── screenshots/               README 用的界面截图
 ```
