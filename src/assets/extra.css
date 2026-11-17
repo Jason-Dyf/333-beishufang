@@ -883,3 +883,20 @@ html[data-theme="dark"] .gr-item:hover{border-color:#4b8ede}
 .gr-gen{display:flex;gap:8px;margin:10px 0 4px}
 .gr-gen .ks-input{flex:1}
 html[data-theme="dark"] .gr-thumb{border-color:#26303f}
+
+/* AI 模板句 */
+.gr-sample{margin:12px 0 0;padding:12px 14px;border-radius:10px;background:var(--soft,#f4f8ff);border:1px dashed var(--line,#dbe7f7)}
+.gr-sample b{display:block;font-size:13px;color:var(--blue,#1d4ed8);margin-bottom:6px}
+.gr-sample p{margin:0;font-size:14px;line-height:1.75;color:var(--ink,#1b2534)}
+html[data-theme="dark"] .gr-sample{background:#18202e;border-color:#2b3648}
+
+/* 评分标准折叠卡 */
+.gr-rubric{margin:10px 0 16px;border:1px solid var(--line,#dbe7f7);border-radius:12px;background:var(--card,#fff);padding:0 14px}
+.gr-rubric summary{cursor:pointer;padding:12px 0;font-weight:600;color:var(--ink,#1b2534);list-style:none}
+.gr-rubric summary::-webkit-details-marker{display:none}
+.gr-rubric[open] summary{border-bottom:1px dashed var(--line,#dbe7f7);margin-bottom:8px}
+.gr-rubric ul{margin:6px 0 14px;padding-left:20px}
+.gr-rubric li{font-size:13.5px;line-height:1.85;color:var(--ink-2,#46536b);margin:2px 0}
+.gr-rubric b{color:var(--blue,#1d4ed8)}
+html[data-theme="dark"] .gr-rubric{background:#151d2c;border-color:#26303f}
+html[data-theme="dark"] .gr-rubric li{color:#b7c4da}

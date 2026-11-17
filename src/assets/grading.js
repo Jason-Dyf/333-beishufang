@@ -318,25 +318,73 @@
     localStorage.setItem("k3_ai_cfg", JSON.stringify(cfg || {}));
   }
 
+  var PLAYBOOK = [
+    "【判分真相】1) 踩点给分、不倒扣：写错不额外扣分，但整点术语写错则该点不给分；2) 同一意思重复写只给一次；",
+    "3) 只写观点/术语、没有一句内涵解释，该点最多给一半；4) 论述题只列观点不论证，最高给一半；",
+    "5) 材料题不引材料原句、不落到材料情节，材料分最多给一成；6) 字数不到建议篇幅 60% 的，整体压到 60% 以下；",
+    "7) 评价/启示/局限缺位，扣论证或评价分；8) 观点与论证对半，材料题＝原理分＋结合材料分各半。",
+    "【体例要求】论述：3–5 个分点，每点「四字小标题＋定义＋展开＋评价句」；人物思想：按「人性论→教育作用→教育目的→内容与方法→评价」分点，少于 4 点扣结构分；",
+    "启示/影响：用 4 字小标题（教育目的/教育内容/教育方法/教育制度/课程设置/师生关系）按维度分段，平铺长句不给结构分；",
+    "材料题：先给教材采分点，再写「材料中『原句』说明……」，书上采分点与材料内容缺一不可。"
+  ].join("\n");
+
   function buildPrompt(item, answer, local) {
     var pts = (item.pts || []).map(function (p, i) {
       return (i + 1) + ". " + p.t + "（权重 " + p.w + "，关键词：" + (p.kw || []).slice(0, 4).join("、") + "）";
     }).join("\n");
-    var sys = "你是 333 教育综合统考阅卷老师。按“踩点给分 + 言之有理”判分，不灌鸡汤、不羞辱。只输出 JSON。";
+    var sys = "你是 333 教育综合统考阅卷老师，熟悉教育部统考大纲与真题评分细则。按“踩点给分 + 言之有理”判分：先说得分，再说依据，不灌鸡汤、不羞辱、不编造教材原文。只输出 JSON，不要 markdown。";
     var user = [
-      "题型：" + (item.kind === "material" ? "材料分析题" : item.kind === "q200" ? "主观题" : "论述题") + "，满分 " + item.full + " 分，科目：" + item.subj,
-      "题目：" + item.q.slice(0, 600),
-      item.kind === "material" ? "材料：" + String(item.mat).slice(0, 800) : "",
-      "本地采分点（可补充，不可全推翻）：\n" + pts,
-      "考生作答：\n" + String(answer).slice(0, 2500),
-      "本地机评：" + local.score + "/" + item.full + "（参考，不要照抄）",
+      "题型：" + (item.kind === "material" ? "材料分析题" : item.kind === "q200" ? "主观题（冬青 200 题）" : "论述题") + "，满分 " + item.full + " 分，科目：" + item.subj + (item.type ? "，类型：" + item.type : ""),
+      "题目：" + String(item.q || "").slice(0, 600),
+      item.kind === "material" ? "材料：" + String(item.mat || "").slice(0, 900) : "",
+      "本题采分点（本地从真题/模拟卷答案与 200 题要点抽出，可微调措辞、可补充，不可全推翻）：\n" + pts,
+      "考生作答：\n" + String(answer).slice(0, 2600),
+      "本地机评（仅供参考，不要照抄）：" + local.score + "/" + item.full + "；已命中 " + (local.hits || []).length + " 点，缺 " + (local.misses || []).length + " 点。",
+      PLAYBOOK,
       "",
-      "输出 JSON：{\"score\":数字,\"parts\":[{\"k\":\"观点/原理\",\"got\":数字,\"max\":数字},{\"k\":\"论证\",\"got\":..,\"max\":..},{\"k\":\"材料/评价\",\"got\":..,\"max\":..}],",
-      "\"bright\":[\"亮点1\",\"亮点2\"],\"misses\":[{\"t\":\"缺失的采分点\",\"why\":\"为什么该有\"}],",
-      "\"advice\":[\"改法1\",\"改法2\"],\"comment\":\"60 字总评\",\"sample\":\"一句可直接背的模板句\"}",
-      "规则：论述=观点/论证各半；材料=原理+结合材料各半；只写术语不给内涵判半；引用材料原句才给材料分；启示影响类没分维度要扣分。"
+      "输出 JSON（严格字段）：",
+      '{"score":数字(0..满分), "parts":[{"k":"观点·采分点","got":数字,"max":数字},{"k":"论证","got":数字,"max":数字}],',
+      ' "hits":[{"t":"命中的采分点","why":"考生哪句话体现"}],',
+      ' "misses":[{"t":"缺失的采分点","why":"为什么该有","fix":"一句话怎么补"}],',
+      ' "bright":["亮点，须引用考生原句"],"advice":["可执行的改法，按优先级≤5条"],',
+      ' "comment":"60 字内总评","sample":"一句可直接背的模板句"}',
+      "材料题的 parts 用「原理·采分点」「结合材料」两段。分数与 parts 之和误差不超过 1 分。"
     ].filter(Boolean).join("\n\n");
     return { sys: sys, user: user };
+  }
+
+  // AI 结果的兜底与自洽检查：字段缺失、分数与分部不符时修正
+  function normAI(o, item, local) {
+    var full = Number(item.full) || 15;
+    var out = o && typeof o === "object" ? o : {};
+    var sc = Number(out.score);
+    if (!isFinite(sc) || sc < 0 || sc > full) sc = local.score;
+    sc = Math.round(sc * 2) / 2;
+    var parts = Array.isArray(out.parts) ? out.parts.filter(function (x) { return x && typeof x.got === "number"; }) : [];
+    if (parts.length === 2) {
+      var sum = parts[0].got + parts[1].got;
+      if (Math.abs(sum - sc) > 1.2) {
+        var diff = sc - sum;
+        var i2 = parts[0].max >= parts[1].max ? 0 : 1;
+        parts[i2].got = Math.max(0, Math.min(parts[i2].max || sc, parts[i2].got + diff));
+      }
+    } else {
+      parts = local.parts || [];
+    }
+    return {
+      score: sc, full: full, rate: Math.round((sc / full) * 100),
+      parts: parts.map(function (x) { return { k: x.k, got: Math.round(x.got * 10) / 10, max: x.max }; }),
+      hits: Array.isArray(out.hits) ? out.hits : (local.hits || []),
+      misses: Array.isArray(out.misses) ? out.misses : (local.misses || []),
+      bright: (Array.isArray(out.bright) && out.bright.length) ? out.bright : (local.bright || []),
+      advice: (Array.isArray(out.advice) && out.advice.length) ? out.advice : (local.advice || []),
+      notes: local.notes || [],
+      quotes: local.quotes || [], causal: local.causal || 0, evalN: local.evalN || 0,
+      points: local.points || 0, heads4: local.heads4 || 0, len: local.len || 0,
+      comment: String(out.comment || "").slice(0, 160),
+      sample: String(out.sample || "").slice(0, 300),
+      mode: "ai"
+    };
   }
 
   function aiGrade(item, answer, local, cfg) {
@@ -368,9 +416,7 @@
         var m = c.match(/\{[\s\S]*\}/);
         if (!m) throw new Error("返回的不是 JSON");
         var o = JSON.parse(m[0]);
-        o.mode = "ai";
-        o.full = item.full;
-        return o;
+        return normAI(o, item, local);
       });
   }
 

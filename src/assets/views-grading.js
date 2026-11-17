@@ -213,6 +213,7 @@
       h += "</ul></div>";
     }
     if (res.comment) h += '<div class="gr-comment">' + A3.md(res.comment) + "</div>";
+    if (res.sample) h += '<div class="gr-sample"><b>📖 可背模板句</b><p>' + A3.md(res.sample) + "</p></div>";
     h += "</div>";
     return h;
   }
@@ -253,11 +254,25 @@
     return h;
   }
 
+  function rubricHtml() {
+    return '<details class="gr-rubric"><summary>📐 评分标准（论述 / 材料分别怎么给分）</summary>' +
+      "<ul>" +
+      "<li><b>论述题 15 分</b>：观点·采分点 7.5 + 论证 7.5。只列观点不展开，论证最多给一半。</li>" +
+      "<li><b>材料题 15 分</b>：原理·采分点 7.5 + 结合材料 7.5。不引材料原句，材料分最多给一成；书上采分点与材料内容缺一不可。</li>" +
+      "<li><b>自测 200 题</b>：要点 60% + 展开 40%，按参考答案的分点算命中。</li>" +
+      "<li><b>踩点</b>：命中术语且有一句内涵解释才算满分，只写术语按半命中（0.35）；同一意思重复不给第二次分。</li>" +
+      "<li><b>结构</b>：论述 3–5 点、每点「四字小标题＋定义＋展开」；人物思想按「人性论→作用→目的→内容方法→评价」至少 4 点；启示/影响按教育目的、内容、方法、制度、师生关系分维度，平铺长句不给结构分。</li>" +
+      "<li><b>篇幅</b>：论述建议 500–600 字，材料 450–550 字；不到 60% 整体压分。</li>" +
+      "<li><b>AI 精批</b>：在「AI 接口设置」填 DeepSeek / 百炼 Key 后，会用同一份采分点 + 上述口径再判一次，并给可背模板句。</li>" +
+      "</ul></details>";
+  }
+
   A3.views.grader = function () {
     var it = S.item;
     var h = '<section class="hero"><h2>🧮 大题批改室</h2>';
     h += "<p>一道一道来：选/粘题目 → 写（或粘）你的答案 → 本地按采分点判分；配好 AI 接口可再精批一次。判分口径：论述 = 观点 + 论证各半，材料 = 原理 + 结合材料各半。</p></section>";
     h += statsHtml();
+    h += rubricHtml();
 
     if (!it) {
       if (S.custom) h += customHtml();
