@@ -2660,6 +2660,14 @@ html[data-theme="dark"] .gr-crow select{background:#151d2c;border-color:#26303f;
 html[data-theme="dark"] .gr-tag.half{background:#2b2313;color:#e8b75e}
 html[data-theme="dark"] .gr-sims li{color:#c9d6ea}
 
+/* 补齐缺失的 .btn 基础样式（批改 / 速练 / AI 设置页的主按钮；此前站点里只有 .btn-download，主按钮全是系统原生样式） */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#1d4ed8,#2f7cf6);color:#fff;font-size:14px;font-weight:700;line-height:1.2;cursor:pointer;box-shadow:0 6px 16px rgba(29,78,216,.22);transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:0 9px 20px rgba(29,78,216,.28)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
+.btn.small{padding:6px 11px;font-size:13px;border-radius:8px}
+html[data-theme="dark"] .btn{box-shadow:0 6px 16px rgba(0,0,0,.35)}
+
 </style>
 </head>
 <body>
