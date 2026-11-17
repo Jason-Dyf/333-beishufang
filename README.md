@@ -4,7 +4,7 @@
 > 不联网、不注册、不收集任何数据，打开就能背。
 
 <p>
-  <img alt="version" src="https://img.shields.io/badge/version-1.3.0-2f6fdb">
+  <img alt="version" src="https://img.shields.io/badge/version-1.3.1-2f6fdb">
   <img alt="questions" src="https://img.shields.io/badge/questions-4204-1aa260">
   <img alt="points" src="https://img.shields.io/badge/points-1324-e0a63c">
   <img alt="papers" src="https://img.shields.io/badge/papers-17-d64545">
@@ -45,13 +45,13 @@
 
 | 文件 | 大小 | 适用 |
 | --- | --- | --- |
-| [`333beishufang-1.3.0.apk`](333beishufang-1.3.0.apk) | 5.1 MB | 安卓手机 / 平板，装完即用，图标在桌面 |
+| [`333beishufang-1.3.1.apk`](333beishufang-1.3.1.apk) | 5.1 MB | 安卓手机 / 平板，装完即用，图标在桌面 |
 | [`333beishufang-tablet.html`](333beishufang-tablet.html) | 16.6 MB | 任意浏览器，双击打开；iPad / 电脑 / 不想装 APK 时用 |
 | [`docs/manual.pdf`](docs/manual.pdf) | 0.9 MB | 图文说明书（安装、功能、语音、常见问题） |
 
 > **一键下载**：
-> - Pages 直连：[333beishufang-1.3.0.apk](https://jason-dyf.github.io/333-beishufang/333beishufang-1.3.0.apk) · [说明书 PDF](https://jason-dyf.github.io/333-beishufang/docs/manual.pdf)
-> - Releases 页面：[v1.3.0](https://github.com/Jason-Dyf/333-beishufang/releases/latest)
+> - Pages 直连：[333beishufang-1.3.1.apk](https://jason-dyf.github.io/333-beishufang/333beishufang-1.3.1.apk) · [说明书 PDF](https://jason-dyf.github.io/333-beishufang/docs/manual.pdf)
+> - Releases 页面：[v1.3.1](https://github.com/Jason-Dyf/333-beishufang/releases/latest)
 > 单文件 HTML 在仓库根目录，点文件名 → 右上角 **Download raw file**。
 > 国内访问 GitHub 慢的话，可以先把仓库整个 `Code → Download ZIP` 下下来再解压。
 
@@ -138,7 +138,7 @@
 ## 快速开始
 
 ### 装 APK（推荐）
-1. 下载 `333beishufang-1.3.0.apk`，传到手机/平板
+1. 下载 `333beishufang-1.3.1.apk`，传到手机/平板
 2. 点击安装，系统提示「未知来源」时选**允许**
 3. 桌面出现「333背书房」，打开即可，全程不需要网络
 
@@ -172,6 +172,10 @@
 
 ## 更新日志
 
+### v1.3.1（2026-11-17）
+
+- 判分引擎修正：分点识别支持「小标题：大意」与「标题。正文」两种写法；只写小标题不再虚高分（半命中上限 0.4）；材料引句不再把题干预行算作引用；满分项不再给自相矛盾的建议。
+
 ### v1.3.0（2026-11-17）
 - 新增「大题批改」：298 道题（真题论述/材料 18 + 模拟卷 84 + 冬青 200 题 196），每题拆出评分采分点（平均 7.1 点）
 - 判分口径按学科：论述 = 观点 50% + 论证 50%，材料 = 原理采分点 50% + 结合材料 50%；输出分数、分部进度、亮点与得分依据、扣分依据、参考答案、提升建议，相关知识点一键跳搜索
@@ -204,7 +208,7 @@
 │   ├── _tablet.js             node tools/_tablet.js → 生成单文件 HTML
 │   └── BUILD.md               构建与二次开发说明（含 APK 打包步骤）
 ├── 333beishufang-tablet.html  打包好的单文件成品（16.6 MB）
-├── 333beishufang-1.3.0.apk    WebView 壳 + 单文件版内容（5.1 MB）
+├── 333beishufang-1.3.1.apk    WebView 壳 + 单文件版内容（5.1 MB）
 ├── docs/                      说明书 PDF/HTML、宣传文案
 └── screenshots/               README 用的界面截图
 ```

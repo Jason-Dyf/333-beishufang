@@ -51,11 +51,16 @@
     var n = 0;
     lines.forEach(function (l) {
       var s = l.trim();
-      if (/^[（(]\s*[一二三四五六七八九十\d]{1,2}\s*[）)]/.test(s)) n++;
+      var hd = s.match(/^([^，。！？；：\n]{2,20})[。．：:]/);
+      var STOP = /^(因此|所以|但是|然而|并且|而且|因为|总之|此外|同时|另外|其次|最后|综上)/;
+      if (hd && hd[1].length >= 3 && !STOP.test(hd[1]) && (s.length - hd[1].length) >= 6) n++;
+      else if (/^[（(]\s*[一二三四五六七八九十\d]{1,2}\s*[）)]/.test(s)) n++;
       else if (/^\d{1,2}\s*[.、．]/.test(s)) n++;
       else if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) n++;
       else if (/^[一二三四五六七八九十]{1,2}、/.test(s)) n++;
       else if (/^[\u4e00-\u9fa5]{4}[：:]/.test(s)) n++;
+      else if (/^[\u4e00-\u9fa5]{2,14}[：:]/.test(s)) n++;
+      else if (/^[\u4e00-\u9fa5]{2,14}[。．]/.test(s) && s.length < 40) n++;
       else if (/^【[^】]{2,16}】/.test(s)) n++;
       else if (/【[^】]{2,16}】/.test(s) && s.length < 60) n++;
     });
@@ -80,7 +85,10 @@
     var sents = String(mat || "")
       .split(/(?<=[。！？；])/)
       .map(function (s) { return s.trim(); })
-      .filter(function (s) { return norm(s).length >= 8; });
+      .filter(function (s) { return norm(s).length >= 8; })
+      // 题干预行（「33．阅读材料，并按要求回答问题。」）不算「引材料」
+      .filter(function (s) { return !/^(?:\d{1,2}\s*[.、．]|阅读材料|结合材料|根据材料|材料\s*[一二三\d]|请回答|回答问题)/.test(s); })
+      .filter(function (s) { return !/阅读材料|按要求回答|结合材料回答/.test(s); });
     var q = [];
     sents.forEach(function (s) {
       if (cover(s, answerBig) >= 0.55) q.push(s.length > 26 ? s.slice(0, 26) + "…" : s);
@@ -103,6 +111,8 @@
 
     var pts = item.pts || [];
     var sumW = pts.reduce(function (a, p) { return a + (p.w || 1); }, 0) || 1;
+    var titleTotal = pts.reduce(function (a, p) { return a + String(p.t || "").length; }, 0);
+    var titleOnly = titleTotal > 0 && len <= titleTotal * 1.45 + 14;
     var gained = 0;
     var hits = [], misses = [];
     if (len < 10) {
@@ -116,6 +126,7 @@
       if (cov >= 0.24 || th.length >= 2 || (th.length >= 1 && th[0].length >= 6)) level = 1;
       else if (cov >= 0.10 || th.length >= 1) level = 0.5;
       var credit = level >= 1 ? 1 : level > 0 ? 0.35 : 0;
+      if (titleOnly && credit > 0.4) credit = 0.4; // 只写小标题、没有解释 → 半命中上限 */
       var got = (p.w || 1) * credit;
       gained += got;
       var row = {
@@ -199,7 +210,7 @@
     if (misses.length) {
       advice.push("补 3 个没写到的采分点：" + misses.slice(0, 3).map(function (m) { return "「" + m.t.slice(0, 14) + "」"; }).join("、") + "。");
     }
-    if (causal < 2) advice.push("每个观点后补一句因果（「因为…」「这说明…」）：论证分只有 " + Math.round(arg) + "/" + Math.round(full * wArg) + "。");
+    if (!isMat && !isQ200 && causal < 2 && argR < 0.85) advice.push("每个观点后补一句因果（「因为…」「这说明…」）：论证分只有 " + Math.round(arg) + "/" + Math.round(full * wArg) + "。");
     if (isMat && quotes.length < 2) advice.push("每问至少引 1 句材料原句，写成「材料中『……』说明……」，两问就是 2 处。");
     if (!isMat && evalN === 0) advice.push("结尾补评价段：历史贡献 + 局限，一句就够，这是 15 分题与 12 分题的差别。");
     if (nPts < 3) advice.push("分 3–5 点、每点一段并编号（一、（一）1. ①），别写成一大段。");
