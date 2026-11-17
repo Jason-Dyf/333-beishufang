@@ -610,7 +610,7 @@
   };
 
   /* ---------- AI 设置 ---------- */
-  var AID = { prov: "", drafts: {} };
+  var AID = { prov: "", drafts: {}, keys: {}, repaired: "" };
 
   var AI_FALLBACK = {
     deepseek: { name: "DeepSeek 官方", base: "https://api.deepseek.com/v1", model: "deepseek-chat", models: ["deepseek-chat", "deepseek-reasoner"] },
@@ -618,11 +618,19 @@
     custom: { name: "自定义", base: "", model: "", models: [] }
   };
 
+  function aiMask(k) {
+    var t = String(k || "");
+    if (!t) return "";
+    return t.slice(0, 3) + "****" + t.slice(-4);
+  }
+
   function aiPidList(PR) {
     var out = [];
     ["deepseek", "bailian"].forEach(function (k) { if (PR[k]) out.push(k); });
     return out;
   }
+
+  A3.aiResetDrafts = function () { AID.prov = ""; AID.drafts = {}; AID.keys = {}; AID.repaired = ""; };
 
   A3.views.aigrade = function () {
     var cfg = (G && G.aiConfig && G.aiConfig()) || {};
@@ -631,15 +639,30 @@
     if (!PR[cur]) cur = "deepseek";
     AID.prov = cur;
 
+    // 只记「地址 + 模型名」；Key 单独放 AID.keys，绝不回填输入框，也不进页面结构
     function draftOf(pid) {
       if (!AID.drafts[pid]) {
         var p = PR[pid] || {};
         var same = (cfg.provider || "deepseek") === pid;
-        AID.drafts[pid] = {
+        var d = {
           base: (same && cfg.base) || p.base || "",
           model: (same && cfg.model) || p.model || "",
-          key: (same && cfg.key) || ""
+          key: ""
         };
+        var stale = (pid === "bailian" && /deepseek\.com/i.test(d.base)) || (pid === "deepseek" && /dashscope|aliyuncs/i.test(d.base));
+        if (stale) {
+          d.base = p.base;
+          d.model = p.model;
+          AID.repaired = "旧配置的接口地址和供应商对不上，已重置成" + (p.name || pid) + "的默认地址和模型；出于隐私，旧 Key 已从本机清掉，请重新粘贴一次。";
+          // 隐私：旧 Key 与供应商对不上时直接从本机抹掉，不留存档
+          if (same && cfg.key) {
+            cfg.key = "";
+            try { G.aiSave({ provider: pid, base: d.base, model: d.model, key: "" }); } catch (e) {}
+          }
+        } else if (same && cfg.key) {
+          AID.keys[pid] = cfg.key;
+        }
+        AID.drafts[pid] = d;
       }
       return AID.drafts[pid];
     }
@@ -657,7 +680,7 @@
 
     h += '<div class="gr-endp" id="aiEndp"></div>';
 
-    h += '<label class="gr-lab" for="aiBase">Base URL</label>';
+    h += '<label class="gr-lab" for="aiBase">Base URL <button type="button" class="gr-reset" id="aiReset">恢复默认</button></label>';
     h += '<input id="aiBase" class="ks-input" spellcheck="false" autocapitalize="off" placeholder="https://…/v1" value="' + esc(d0.base) + '">';
 
     h += '<label class="gr-lab" for="aiModel">模型名 <span class="gr-lab-tip">点下面任意一个，或直接填（百炼全部模型都行）</span></label>';
@@ -665,8 +688,8 @@
     h += '<datalist id="aiModelList"></datalist>';
     h += '<div class="gr-models" id="aiModelChips"></div>';
 
-    h += '<label class="gr-lab" for="aiKey">API Key</label>';
-    h += '<input id="aiKey" type="password" class="ks-input" spellcheck="false" autocapitalize="off" placeholder="sk-…" value="' + esc(d0.key) + '">';
+    h += '<label class="gr-lab" for="aiKey">API Key <button type="button" class="gr-reset" id="aiKeyClear">清除已存的 Key</button></label>';
+    h += '<input id="aiKey" type="password" class="ks-input" spellcheck="false" autocapitalize="off" autocomplete="off" value="" placeholder="sk-…">';
 
     h += '<div class="gr-tools"><button type="button" class="btn" id="aiSave">保存</button><button type="button" class="ghost-btn" id="aiTest">测试连接</button><button type="button" class="ghost-btn" data-go="grader">去批改</button></div>';
     h += '<div class="gr-msg" id="aiMsg"></div>';
@@ -674,7 +697,7 @@
     h += '<li><b>DeepSeek</b>：platform.deepseek.com 生成 Key，Base <code>https://api.deepseek.com/v1</code>，模型 <code>deepseek-chat</code>。</li>';
     h += '<li><b>百炼</b>：dashscope.console.aliyun.com 生成 Key，Base <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>，模型填控制台上的名字即可：<code>qwen-plus</code> <code>qwen-max</code> <code>qwen3-max</code> <code>deepseek-v3.1</code> <code>kimi-k2-instruct</code> 都行。</li>';
     h += '<li>报 <b>401</b> 九成是 Key 和 Base 不是一家（百炼 Key 配了 DeepSeek 地址）；报 <b>404</b> 是模型名写错。</li>';
-    h += '<li>手机/平板上如果提示网络错误，多半是当前网络不通，不影响本地判分。</li>';
+    h += '<li>Key 只存在这台设备的浏览器里；输入框留空表示沿用已存的 Key，页面上只显示打码后的尾号。</li>';
     h += "</ul></div>";
 
     app.innerHTML = h;
@@ -687,8 +710,15 @@
     var elChips = document.getElementById("aiModelChips");
     var elList = document.getElementById("aiModelList");
 
+    function effectiveKey() {
+      return elKey.value.trim() || AID.keys[cur] || "";
+    }
+    function keyPlaceholder() {
+      var k = AID.keys[cur];
+      return k ? "已保存 " + aiMask(k) + "（留空沿用）" : "sk-…";
+    }
     function readCfg() {
-      return { provider: cur, base: elBase.value.trim(), model: elModel.value.trim(), key: elKey.value.trim() };
+      return { provider: cur, base: elBase.value.trim(), model: elModel.value.trim(), key: effectiveKey() };
     }
     function setMsg(t, kind) {
       elMsg.className = "gr-msg" + (kind ? " " + kind : "");
@@ -699,11 +729,12 @@
       Array.prototype.forEach.call(app.querySelectorAll("[data-ap]"), function (b) {
         b.className = "chip" + (b.getAttribute("data-ap") === cur ? " active" : "");
       });
-      var p = PR[cur] || {};
       var base = (G && G.normBase ? G.normBase(elBase.value) : elBase.value.trim());
       elEndp.innerHTML = base
         ? '接口 <code title="' + esc(base + "/chat/completions") + '">' + esc(base.replace(/^https?:\/\//, "")) + '</code> · 模型 <code>' + esc(elModel.value.trim() || "—") + "</code>"
         : "先填 Base URL（百炼：<code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>）";
+      elKey.placeholder = keyPlaceholder();
+      var p = PR[cur] || {};
       var ms = (p.models || []).slice();
       elList.innerHTML = ms.map(function (m) { return '<option value="' + esc(m) + '">'; }).join("");
       elChips.innerHTML = ms.map(function (m) {
@@ -722,50 +753,74 @@
       b.onclick = function () {
         var next = b.getAttribute("data-ap");
         if (next === cur) return;
-        AID.drafts[cur] = { base: elBase.value.trim(), model: elModel.value.trim(), key: elKey.value.trim() };
+        AID.drafts[cur] = { base: elBase.value.trim(), model: elModel.value.trim(), key: "" };
+        var typed = elKey.value.trim();
+        if (typed) AID.keys[cur] = typed;
+        elKey.value = "";
         cur = next;
         AID.prov = next;
         var d = draftOf(next);
         elBase.value = d.base;
         elModel.value = d.model;
-        elKey.value = d.key;
         paint();
         setMsg("");
       };
     });
 
+    document.getElementById("aiReset").onclick = function () {
+      var p = PR[cur] || {};
+      elBase.value = p.base || "";
+      elModel.value = p.model || "";
+      AID.drafts[cur] = { base: elBase.value, model: elModel.value, key: "" };
+      paint();
+      setMsg("已恢复 " + (p.name || cur) + " 的默认地址和模型；Key 没动。", "wait");
+    };
+
+    document.getElementById("aiKeyClear").onclick = function () {
+      AID.keys[cur] = "";
+      elKey.value = "";
+      var c = readCfg();
+      c.key = "";
+      try { G.aiSave(c); } catch (e) {}
+      paint();
+      setMsg("已从这台设备删除该 Key。", "ok");
+    };
+
     var sv = document.getElementById("aiSave");
     sv.onclick = function () {
       var c = readCfg();
+      if (!c.key) { setMsg("Key 是空的：粘贴一次再保存，或先看上面的提示。", "bad"); elKey.focus(); return; }
+      AID.keys[cur] = c.key;
+      AID.drafts[cur] = { base: c.base, model: c.model, key: "" };
       G.aiSave(c);
-      AID.drafts[c.provider] = { base: c.base, model: c.model, key: c.key };
-      setMsg("已保存到本机（只存在这台设备的浏览器里）。", "ok");
+      elKey.value = "";
+      paint();
+      setMsg("已保存到本机（只存在这台设备的浏览器里）；为隐私，输入框不再显示 Key，只显示尾号。", "ok");
     };
 
     var ts = document.getElementById("aiTest");
     ts.onclick = function () {
       var c = readCfg();
-      if (!c.key) { setMsg("先填 API Key。", "bad"); elKey.focus(); return; }
+      if (!c.key) { setMsg("先粘贴 API Key（保存过的话这里可以留空）。", "bad"); elKey.focus(); return; }
       if (!c.base) { setMsg("先填 Base URL。", "bad"); elBase.focus(); return; }
       if (!c.model) { setMsg("先填模型名。", "bad"); elModel.focus(); return; }
       G.aiSave(c);
-      AID.drafts[c.provider] = { base: c.base, model: c.model, key: c.key };
-      AID.busy = true;
+      AID.drafts[c.provider] = { base: c.base, model: c.model, key: "" };
       setMsg("正在连接 " + c.model + " …", "wait");
       ts.disabled = true;
       G.aiPing(c).then(function (r) {
-        AID.busy = false;
         ts.disabled = false;
-        setMsg("✓ 通了：模型 " + r.model + "，用时 " + (r.ms / 1000).toFixed(1) + " 秒，回了「" + r.text + "」。现在可以去批改页点「AI 精批」。", "ok");
+        if (elKey.value.trim()) { AID.keys[cur] = elKey.value.trim(); elKey.value = ""; paint(); }
+        setMsg("✓ 通了：模型 " + r.model + "，用时 " + (r.ms / 1000).toFixed(1) + " 秒，回了「" + r.text + "」。可以回批改页点「AI 精批」了。", "ok");
       }).catch(function (e) {
-        AID.busy = false;
         ts.disabled = false;
         setMsg("失败：" + (e && e.message ? e.message : e), "bad");
       });
     };
 
     paint();
-    if (S.msg) { elMsg.className = "gr-msg"; elMsg.textContent = S.msg; }
+    if (AID.repaired) { setMsg(AID.repaired, "wait"); AID.repaired = ""; }
+    else if (S.msg) { elMsg.className = "gr-msg"; elMsg.textContent = S.msg; }
     A3.bindGo();
   };
 
