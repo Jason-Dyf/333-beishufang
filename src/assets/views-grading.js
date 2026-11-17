@@ -9,6 +9,7 @@
   var S = {
     item: null, ans: "", res: null, ai: null, busy: "", msg: "",
     f: "all", q: "", show: 24, custom: false, cq: "", cmat: "", cfull: 15,
+    cans: "", csub: "edu-principle", cmsg: "", freeIt: null, freeSims: null,
     ansOpen: false, drill: null, drillText: "", drillRes: null, hist: true,
     img: "", imgName: "", topic: "", genBusy: ""
   };
@@ -24,7 +25,11 @@
   function byId(id) { for (var i = 0; i < items().length; i++) if (items()[i].id === id) return items()[i]; return null; }
 
   function subjName(id) {
-    var m = { ep: "教原", cn: "中教史", wj: "外教史", xl: "教心" };
+    var m = {
+      "ep": "教育学原理", "cn": "中国教育史", "wj": "外国教育史", "xl": "教育心理学",
+      "edu-principle": "教育学原理", "edu-china": "中国教育史",
+      "edu-foreign": "外国教育史", "edu-psych": "教育心理学"
+    };
     return m[id] || id || "";
   }
   function srcName(it) {
@@ -94,7 +99,7 @@
   function recHtml() {
     var recs = loadRecs().slice(0, 12);
     if (!recs.length) return "";
-    var h = '<div class="section-title"><h3>最近批改</h3><button class="ghost-btn gr-recdel" id="grRecDel">清空</button></div><div class="mcard gr-recs">';
+    var h = '<div class="section-title gr-rec-head">最近批改<button class="ghost-btn gr-recdel" id="grRecDel">清空</button></div><div class="mcard gr-recs">';
     recs.forEach(function (r) {
       h += '<button class="gr-rec" data-rec="' + esc(r.id) + '">';
       h += '<span class="gr-rec-s">' + r.score + '<i>/' + r.full + "</i></span>";
@@ -119,6 +124,8 @@
   function pickerHtml() {
     var list = filterList();
     var h = "";
+    h += '<div class="gr-freebar"><button class="btn gr-freebtn" id="grCustom">✍ 自由批改 · 任意题目（不用题库）</button>' +
+      '<span class="gr-freehint">不在题库里的题、网上的模拟题，粘进来就能批</span></div>';
     h += '<div class="gr-chips">';
     [["all", "全部 " + items().length], ["essay", "论述 " + items().filter(function (i) { return i.kind === "essay"; }).length],
       ["material", "材料 " + items().filter(function (i) { return i.kind === "material"; }).length],
@@ -141,18 +148,25 @@
     if (list.length > show.length) {
       h += '<div class="gr-more"><button class="ghost-btn" id="grMore">再显示 ' + Math.min(24, list.length - show.length) + " 题</button></div>";
     }
-    h += '<div class="gr-foot"><button class="ghost-btn" id="grCustom">✍ 自定义题目（自己录题）</button>';
-    h += '<button class="ghost-btn" data-go="drill">⚡ 去速练大题</button></div>';
+    h += '<div class="gr-foot"><button class="ghost-btn" data-go="drill">⚡ 去速练大题</button></div>';
     return h;
   }
 
+  // 自由批改：任意题目都能批，不依赖题库；AI 会拿「题库相似题的采分点 + 自己的判断」来判
   function customHtml() {
-    var h = '<div class="section-title"><h3>自定义题目</h3></div><div class="mcard gr-custom">';
-    h += '<label class="gr-lab">题目 / 材料</label><textarea id="grCq" rows="4" placeholder="把题目或材料粘进来…">' + esc(S.cq) + "</textarea>";
-    h += '<label class="gr-lab">材料（可选）</label><textarea id="grCmat" rows="3" placeholder="材料分析题把材料原文粘这里">' + esc(S.cmat) + "</textarea>";
-    h += '<div class="gr-row"><label class="gr-lab">满分</label><input id="grCfull" type="number" min="5" max="40" value="' + (+S.cfull || 15) + '"></div>';
-    h += '<div class="gr-tools"><button class="btn" id="grCustomGo">开始批改这道题</button><button class="ghost-btn" id="grCBack">返回题库</button></div>';
-    h += '<div class="gr-msg">自定义题目没有采分点库：本地判分只看结构、篇幅与材料引用，想要内容分请配 AI Key 用「AI 精批」。</div>';
+    var h = '<div class="section-title">✍ 自由批改 · 任意题目</div><div class="mcard gr-custom">';
+    h += '<div class="gr-free-tip">不用在题库里选题：把题目（和材料）粘进来，写完答案就能批。配了 AI Key 会参考题库里相似题的采分点，再按 333 的判分口径给分。</div>';
+    h += '<label class="gr-lab">题目</label><textarea id="grCq" rows="3" placeholder="例：试述蔡元培「五育并举」的教育方针及其影响。">' + esc(S.cq) + "</textarea>";
+    h += '<label class="gr-lab">材料（材料题才要）</label><textarea id="grCmat" rows="3" placeholder="材料分析题把材料原文粘这里；论述题留空。">' + esc(S.cmat) + "</textarea>";
+    h += '<div class="gr-row gr-crow"><label class="gr-lab">满分</label><input id="grCfull" type="number" min="5" max="40" value="' + (+S.cfull || 15) + '">';
+    h += '<label class="gr-lab">科目</label><select id="grCsub" class="ks-input">';
+    [["edu-principle", "教育学原理"], ["edu-china", "中国教育史"], ["edu-foreign", "外国教育史"], ["edu-psych", "教育心理学"]].forEach(function (s) {
+      h += '<option value="' + s[0] + '"' + (S.csub === s[0] ? " selected" : "") + ">" + s[1] + "</option>";
+    });
+    h += "</select></div>";
+    h += '<div class="gr-tools"><button class="btn" id="grCustomGo">下一步：写我的答案</button>' +
+      '<button class="ghost-btn" id="grCBack">返回题库选题</button></div>';
+    h += '<div class="gr-msg">' + (S.cmsg ? esc(S.cmsg) : "判分时会先找题库里相似的题，拿它的采分点当参考；配了 AI Key 再让模型结合 333 判分口径给分。") + "</div>";
     h += "</div>";
     return h;
   }
@@ -199,7 +213,11 @@
     }
     if (res.hits && res.hits.length) {
       h += '<div class="gr-block"><h4>踩到的点</h4><div class="gr-tags">';
-      res.hits.forEach(function (x) { h += '<span class="gr-tag ok">' + esc(x) + "</span>"; });
+      res.hits.forEach(function (x) {
+        var t = typeof x === "string" ? x : String((x && (x.t || x.title)) || "");
+        var half = typeof x === "object" && x && x.level != null && x.level < 1;
+        h += '<span class="gr-tag ' + (half ? "half" : "ok") + '">' + esc(t) + (half ? "<i>半</i>" : "") + "</span>";
+      });
       h += "</div></div>";
     }
     if (res.misses && res.misses.length) {
@@ -249,10 +267,24 @@
     return h;
   }
 
+  // 关键词清洗：只留像「教育目的」「大学区制」这种术语，挡掉「该主张的优点是」「B.批判社会本位论」这类碎片
+  function cleanKw(k) {
+    k = String(k || "").trim();
+    if (k.length < 3 || k.length > 12) return "";
+    if (!/^[\u4e00-\u9fa5·（）()]+$/.test(k)) return "";           // 含字母、数字、标点的一律不要
+    if (/^(该|其|此|这|那|本|上述|以下|其中|如|若)/.test(k)) return "";
+    if (/(的|是|属|有|了|吗|呢|吧|与|和|及|或)$/.test(k)) return "";
+    if (/优点|缺点|特点|意义|原因|措施|启示|主张的|看法|观点是/.test(k) && k.length < 8) return "";
+    return k;
+  }
+
   function linksHtml(it) {
     var kws = [];
-    (it.pts || []).slice(0, 3).forEach(function (p) { (p.kw || []).slice(0, 2).forEach(function (k) { kws.push(k); }); });
-    kws = kws.filter(function (k, i) { return k && k.length >= 2 && kws.indexOf(k) === i; }).slice(0, 5);
+    (it.pts || []).slice(0, 4).forEach(function (p) { (p.kw || []).slice(0, 2).forEach(function (k) { kws.push(k); }); });
+    // 采分点标题本身就是词组，优先当知识点（去掉括号里的说明）
+    (it.pts || []).slice(0, 3).forEach(function (p) { kws.push(String(p.t || "").replace(/（[^）]*）/g, "").replace(/^[^·]{0,10}·/, "")); });
+    kws = kws.map(cleanKw).filter(function (k, i, a) { return k && a.indexOf(k) === i; }).slice(0, 5);
+    if (!kws.length) return "";
     var h = '<div class="gr-links">';
     h += '<span class="gr-link-lab">相关知识点：</span>';
     kws.forEach(function (k) {
@@ -277,14 +309,20 @@
 
   A3.views.grader = function () {
     var it = S.item;
+    // 自由批改是一等入口：点进来直接给表单，不再叠在题库列表下面
+    if (!it && S.custom) {
+      app.innerHTML = customHtml();
+      bindPicker();
+      try { window.scrollTo(0, 0); } catch (e) {}
+      return;
+    }
     var h = '<section class="hero"><h2>🧮 大题批改室</h2>';
     h += "<p>一道一道来：选/粘题目 → 写（或粘）你的答案 → 本地按采分点判分；配好 AI 接口可再精批一次。判分口径：论述 = 观点 + 论证各半，材料 = 原理 + 结合材料各半。</p></section>";
     h += statsHtml();
     h += rubricHtml();
 
     if (!it) {
-      if (S.custom) h += customHtml();
-      else h += pickerHtml();
+      h += pickerHtml();
       h += recHtml();
       app.innerHTML = h;
       bindPicker();
@@ -311,8 +349,14 @@
 
     if (S.res) {
       h += resultHtml(it, S.res);
+      if (it.free && it.sims && it.sims.length) {
+        h += '<div class="gr-block gr-sims"><h4>📚 参考了题库里的相似题</h4><ul>';
+        it.sims.forEach(function (x) { h += "<li>" + esc(x.q) + (x.type ? '（' + esc(x.type) + "）" : "") + "</li>"; });
+        h += "</ul><div class=\"gr-free-tip\">这些题的采分点只是参考；题目不一样时，以你写的这道题为准。</div></div>";
+      }
       h += linksHtml(it);
-      h += ansHtml(it);
+      if (!it.free) h += ansHtml(it);
+      else if ((it.pts || []).length) h += ansHtml(it);
     }
     app.innerHTML = h;
     bindGrader(it);
@@ -354,12 +398,15 @@
     if (cq) cq.oninput = function () { S.cq = cq.value; };
     if (cm) cm.oninput = function () { S.cmat = cm.value; };
     if (cf) cf.oninput = function () { S.cfull = +cf.value || 15; };
+    var csub = document.getElementById("grCsub");
+    if (csub) csub.onchange = function () { S.csub = csub.value; };
     var go = document.getElementById("grCustomGo");
     if (go) {
       go.onclick = function () {
-        if (!S.cq.trim()) { S.msg = "先把题目粘进来"; return; }
-        S.item = { id: "custom", kind: "material", full: +S.cfull || 15, subj: "", q: S.cq, mat: S.cmat, pts: [], ans: "", type: "自定义" };
-        S.custom = false; S.res = null; S.ans = ""; A3.render();
+        if (!S.cq.trim()) { S.cmsg = "先把题目粘进来"; A3.render(); return; }
+        var free = (window.K3G && K3G.freeItem) ? K3G.freeItem(S.cq, S.cmat, S.cfull, S.csub) : null;
+        S.item = free || { id: "custom", kind: "essay", full: +S.cfull || 15, subj: S.csub, q: S.cq, mat: S.cmat, pts: [], ans: "", type: "自由批改", free: true };
+        S.custom = false; S.res = null; S.ans = ""; S.msg = ""; A3.render();
       };
     }
     A3.bindGo();
@@ -453,7 +500,8 @@
     A3.render();
     var local = null;
     try { local = G.grade(it, S.ans); } catch (e) {}
-    G.aiGrade(it, S.ans, local, cfg).then(function (o) {
+    var job = (it.free && G.aiFree) ? G.aiFree(it, S.ans, local, cfg) : G.aiGrade(it, S.ans, local, cfg);
+    job.then(function (o) {
       o.rate = it.full ? (+o.score || 0) / it.full : 0;
       S.res = o; S.busy = ""; S.msg = "AI 批改完成，可以对照本地判分。";
       saveRec({ id: it.id, kind: it.kind, score: (+o.score || 0).toFixed(1), full: it.full, rate: o.rate, title: it.q.slice(0, 24), at: new Date().toISOString() });

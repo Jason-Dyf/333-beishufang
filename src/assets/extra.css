@@ -904,5 +904,21 @@ html[data-theme="dark"] .gr-rubric li{color:#b7c4da}
 /* 批改：引到的材料原句 / 清空记录 */
 .gr-quotes li{font-size:12.5px;line-height:1.6;color:var(--ink-2,#42506a);margin:2px 0}
 html[data-theme="dark"] .gr-quotes li{color:#c9d6ea}
-.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gr-rec-head{justify-content:space-between}
 .gr-recdel{padding:3px 10px;font-size:12px}
+
+/* 自由批改入口（一等入口） */
+.gr-freebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:6px 0 12px}
+.gr-freebtn{background:linear-gradient(135deg,#1d4ed8,#2f7cf6);color:#fff;border:0;box-shadow:0 6px 16px rgba(29,78,216,.22)}
+.gr-freehint{font-size:12px;color:var(--ink-3,#7c8aa5)}
+.gr-free-tip{font-size:12.5px;line-height:1.7;color:var(--ink-2,#46536b);background:var(--soft,#f2f7ff);border-left:3px solid var(--blue,#1d4ed8);border-radius:8px;padding:9px 12px;margin:0 0 12px}
+.gr-crow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.gr-crow>label{flex:0 0 auto}
+.gr-crow select{max-width:180px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#dbe7f7);background:var(--card,#fff);color:inherit;font-size:14px}
+.gr-tag.half{background:#fff4e0;color:#8a5b16;display:inline-flex;align-items:center;gap:4px}
+.gr-tag.half i{font-style:normal;font-size:10px;opacity:.75;border:1px solid currentColor;border-radius:4px;padding:0 3px;line-height:1.4}
+.gr-sims li{font-size:13px;line-height:1.7;color:var(--ink-2,#42506a);margin:3px 0}
+html[data-theme="dark"] .gr-free-tip{background:#18202e;color:#b7c4da}
+html[data-theme="dark"] .gr-crow select{background:#151d2c;border-color:#26303f;color:#e6eefb}
+html[data-theme="dark"] .gr-tag.half{background:#2b2313;color:#e8b75e}
+html[data-theme="dark"] .gr-sims li{color:#c9d6ea}

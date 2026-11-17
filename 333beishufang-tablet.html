@@ -2641,8 +2641,24 @@ html[data-theme="dark"] .gr-rubric li{color:#b7c4da}
 /* 批改：引到的材料原句 / 清空记录 */
 .gr-quotes li{font-size:12.5px;line-height:1.6;color:var(--ink-2,#42506a);margin:2px 0}
 html[data-theme="dark"] .gr-quotes li{color:#c9d6ea}
-.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gr-rec-head{justify-content:space-between}
 .gr-recdel{padding:3px 10px;font-size:12px}
+
+/* 自由批改入口（一等入口） */
+.gr-freebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:6px 0 12px}
+.gr-freebtn{background:linear-gradient(135deg,#1d4ed8,#2f7cf6);color:#fff;border:0;box-shadow:0 6px 16px rgba(29,78,216,.22)}
+.gr-freehint{font-size:12px;color:var(--ink-3,#7c8aa5)}
+.gr-free-tip{font-size:12.5px;line-height:1.7;color:var(--ink-2,#46536b);background:var(--soft,#f2f7ff);border-left:3px solid var(--blue,#1d4ed8);border-radius:8px;padding:9px 12px;margin:0 0 12px}
+.gr-crow{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.gr-crow>label{flex:0 0 auto}
+.gr-crow select{max-width:180px;padding:8px 10px;border-radius:8px;border:1px solid var(--line,#dbe7f7);background:var(--card,#fff);color:inherit;font-size:14px}
+.gr-tag.half{background:#fff4e0;color:#8a5b16;display:inline-flex;align-items:center;gap:4px}
+.gr-tag.half i{font-style:normal;font-size:10px;opacity:.75;border:1px solid currentColor;border-radius:4px;padding:0 3px;line-height:1.4}
+.gr-sims li{font-size:13px;line-height:1.7;color:var(--ink-2,#42506a);margin:3px 0}
+html[data-theme="dark"] .gr-free-tip{background:#18202e;color:#b7c4da}
+html[data-theme="dark"] .gr-crow select{background:#151d2c;border-color:#26303f;color:#e6eefb}
+html[data-theme="dark"] .gr-tag.half{background:#2b2313;color:#e8b75e}
+html[data-theme="dark"] .gr-sims li{color:#c9d6ea}
 
 </style>
 </head>
@@ -16880,6 +16896,18 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
     return m ? m.length : 0;
   }
 
+  // 采分点标题清洗：答案分句常被切成「该主张的优点是」这类碎片，显示时换成正文
+  function niceTitle(t, body) {
+    t = String(t || "").replace(/\s+/g, "").replace(/^[（(]\s*\d+\s*[）)]/, "");
+    var bad = /^(该|其|此|这|那|本|上述|以下|其中)|(的|是|属|有|了)$/.test(t) ||
+      /^(优点|缺点|特点|原因|措施|启示|意义|作用|内容|方法)[:：]?$/.test(t) || t.length < 3;
+    if (bad) {
+      var b = String(body || "").replace(/\s+/g, "").replace(/^[，。；：、]+/, "");
+      if (b.length >= 6) return b.slice(0, 14) + (b.length > 14 ? "…" : "");
+    }
+    return t.length > 18 ? t.slice(0, 18) + "…" : t;
+  }
+
   // 分点识别：行首编号、行首四字小标题、句首「一、」、行内 【小标题】
   function countPoints(text) {
     var lines = String(text || "").split(/\n+/);
@@ -16916,14 +16944,21 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
   }
 
   // 材料原句引用：把材料切成句子，看每句有多少被写进作答
-  function quotedSentences(mat, answerBig) {
+  function quotedSentences(mat, answerBig, stem) {
+    var stemNorm = norm(stem || "");
+    var stemBig = bigrams(stemNorm);
     var sents = String(mat || "")
       .split(/(?<=[。！？；])/)
       .map(function (s) { return s.trim(); })
       .filter(function (s) { return norm(s).length >= 8; })
-      // 题干预行（「33．阅读材料，并按要求回答问题。」）不算「引材料」
-      .filter(function (s) { return !/^(?:\d{1,2}\s*[.、．]|阅读材料|结合材料|根据材料|材料\s*[一二三\d]|请回答|回答问题)/.test(s); })
-      .filter(function (s) { return !/阅读材料|按要求回答|结合材料回答/.test(s); });
+      // 指令句（「根据这一精神，评析……的不足」「请回答……」「简述……」）不是材料原句
+      .filter(function (s) {
+        if (/^(?:\d{1,2}\s*[.、．]|阅读材料|结合材料|根据材料|材料\s*[一二三\d]|请回答|回答问题)/.test(s)) return false;
+        if (/(请|试|简要|评析|分析|简述|论述|阐释|回答|指出|谈谈|根据|结合材料)/.test(s) &&
+          /(不足|原因|意义|影响|观点|主张|做法|关系|特点|启示|评价|措施|是什么|如何|为什么|怎样)/.test(s) &&
+          s.length < 95) return false;
+        return true;
+      })
     var q = [];
     sents.forEach(function (s) {
       if (cover(s, answerBig) >= 0.55) q.push(s.length > 26 ? s.slice(0, 26) + "…" : s);
@@ -16966,6 +17001,7 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
       gained += got;
       var row = {
         t: p.t,
+        disp: niceTitle(p.t, p.body),
         cov: Math.round(cov * 100) / 100,
         level: level,
         w: p.w,
@@ -16981,7 +17017,7 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
     var ptRatio = gained / sumW; // 0..1 观点覆盖率（含半命中）
     var causal = countRe(txt, CAUSAL);
     var evalN = countRe(txt, EVAL);
-    var quotes = isMat ? quotedSentences(item.mat || item.q, answerBig) : [];
+    var quotes = isMat ? quotedSentences(item.mat || item.q, answerBig, item.q) : [];
     var nPts = countPoints(txt);
     var heads4 = fourCharHeads(txt);
 
@@ -17035,6 +17071,7 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
     if (len < expect * 0.45) { cap = Math.min(cap, full * (noPts ? 0.78 : 0.62)); notes.push("篇幅 " + len + " 字，明显短于该题建议的 " + expect + " 字，论证不完整。"); }
     else if (len < expect * 0.7) { cap = Math.min(cap, full * 0.85); notes.push("篇幅偏短（" + len + " 字），建议写到 " + expect + " 字左右。"); }
     if (isMat && quotes.length === 0) { notes.push("全篇没有引用材料原句：材料题「原理分 + 材料分」各半，不引材料最高只能拿一半。"); }
+    if (isMat && quotes.length >= 1 && idea < full * 0.2) { notes.push("材料引到了，但原理/采分点没踩到：先写书上的原理，再「材料中『……』说明……」。"); }
     if (!isMat && (item.type === "启示影响") && heads4 < 3) { notes.push("启示/影响类建议用 4 字小标题（如「教育目的」「教育内容」）分维度写，当前只有 " + heads4 + " 个。"); }
     if (!isMat && (item.type === "人物思想") && nPts < 4) { notes.push("人物思想类至少要分 4 点（教育目的 / 内容 / 方法 / 制度 / 评价），当前 " + nPts + " 点。"); }
 
@@ -17057,9 +17094,9 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
 
     // 亮点
     var bright = [];
-    if (hits.length) bright.push("命中了 " + hits.filter(function (h) { return h.level >= 1; }).length + " 个完整采分点、" + hits.filter(function (h) { return h.level < 1; }).length + " 个半命中，主要落在「" + hits.slice(0, 3).map(function (h) { return h.t.slice(0, 10); }).join("」「") + "」。");
+    if (hits.length) bright.push("命中了 " + hits.filter(function (h) { return h.level >= 1; }).length + " 个完整采分点、" + hits.filter(function (h) { return h.level < 1; }).length + " 个半命中，主要落在「" + hits.slice(0, 3).map(function (h) { return String(h.disp || h.t || "").slice(0, 10); }).join("」「") + "」。");
     if (causal >= 2) bright.push("有 " + causal + " 处因果论证，说明不是只罗列观点。");
-    if (isMat && quotes.length) bright.push("引用了 " + quotes.length + " 处材料原句，原理能落到材料上。");
+    if (isMat && quotes.length && idea >= full * 0.2) bright.push("引用了 " + quotes.length + " 处材料原句，原理能落到材料上。");
     if (!isMat && evalN) bright.push("有独立评价句，观点之外给了判断。");
     if (heads4 >= 3) bright.push("用了 " + heads4 + " 个四字小标题，结构清楚。");
     if (!bright.length) bright.push("先把题干关键词写进第一句，再把教材定义补上，能立刻多拿分。");
@@ -17336,6 +17373,137 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
     });
   }
 
+  // ---------- 自由批改（不依赖题库）：题库相似题给「参考采分点」，AI 再结合自己的判断 ----------
+  function bankItems() {
+    return (root.K3_GQ && root.K3_GQ.items) || [];
+  }
+
+  function similarItems(text, k) {
+    var big = bigrams(norm(String(text || "").slice(0, 400)));
+    if (!Object.keys(big).length) return [];
+    var out = [];
+    bankItems().forEach(function (it) {
+      var s = 0.65 * cover(it.q || "", big) + 0.35 * cover((it.asks || "") + " " + (it.type || ""), big);
+      if (s >= 0.12) out.push({ it: it, s: s });
+    });
+    out.sort(function (a, b) { return b.s - a.s; });
+    return out.slice(0, k || 3);
+  }
+
+  // 自由批改：只借「同主题」的采分点（采分点关键词必须真的出现在题目/材料里），
+  // 否则宁可没有采分点、只按结构与材料分判，也不能把 1922 学制的点扣到黄炎培头上。
+  function freeType(q, isMat) {
+    var t = String(q || "");
+    if (isMat) return "材料分析";
+    if (/启示|启发|借鉴|现实意义|当代价值/.test(t)) return "启示影响";
+    if (/思想|主张|观点|教育观|理念/.test(t)) return "人物思想";
+    if (/制度|学制|法案|章程|政策/.test(t)) return "制度法案";
+    if (/评价|评析|比较|异同/.test(t)) return "评价比较";
+    return "理论论述";
+  }
+
+  function freeItem(q, mat, full, subj) {
+    q = String(q || "").trim();
+    mat = String(mat || "").trim();
+    full = Math.max(5, Math.min(40, +full || 15));
+    var kind = mat.length > 40 ? "material" : "essay";
+    var text = q + " " + mat.slice(0, 400);
+    var nq = norm(text);
+    var qb = bigrams(nq);
+    var nqb = Object.keys(qb).length || 1;
+
+    // 逐个采分点算「与这道题的相关度」：关键词原样出现 → 强信号；
+    // 标题与题目共享二元组 → 次强信号；两边都没有就不借（宁缺毋滥）。
+    var cand = [];
+    bankItems().forEach(function (it) {
+      var qBig = bigrams(norm(String(it.q || "")));
+      var qn = Object.keys(qBig).length || 1;
+      var inter = 0;
+      Object.keys(qBig).forEach(function (k) { if (qb[k]) inter++; });
+      var qDice = (2 * inter) / (qn + nqb); // 题目相似度，最多算 0.4 分权
+      (it.pts || []).forEach(function (p) {
+        var kws = (p.kw || []).filter(function (k) {
+          var t = String(k || "").trim();
+          if (t.length < 3) return false;
+          if (!/^[一-龥·]{3,}$/.test(t)) return false; // 只要纯中文术语：挡掉「（6分）」「A.」「1922年」
+          if (/^(结合材料|阅读材料|根据材料|材料分析|请结合|综上|总之)/.test(t)) return false;
+          // 「主要内容」「启示」这类泛词在题干里必然出现，不能当作相关证据
+          return !/^(主要内容|主要观点|基本内容|内容|启示|启发|意义|影响|特点|原因|措施|评价|主张|观点|作用|背景|过程|方法|原则|目的|性质|地位|贡献|局限)$/.test(t);
+        });
+        var hits = kws.filter(function (k) { return nq.indexOf(norm(k)) >= 0; });
+        var tb = bigrams(norm(p.t || ""));
+        var tn = Object.keys(tb).length || 1;
+        var ti = 0;
+        Object.keys(tb).forEach(function (k) { if (qb[k]) ti++; });
+        var tDice = (2 * ti) / (tn + nqb);
+        if (/^(主要内容|参考答案|答案|答[:：])/.test(String(p.t || ""))) return;
+        if (!hits.length && tDice < 0.26) return;
+        cand.push({ p: p, from: String(it.type || "题库"), sc: hits.length * 3 + tDice * 2 + qDice * 0.4 });
+      });
+    });
+    cand.sort(function (a, b) { return b.sc - a.sc; });
+
+    var pts = [], sims = [], seen = {};
+    cand.forEach(function (c) {
+      var key = norm(c.p.t || "").slice(0, 14);
+      if (!key || seen[key]) return;
+      seen[key] = 1;
+      pts.push({ t: c.p.t, body: c.p.body, kw: c.p.kw, n: pts.length + 1, from: c.from });
+      if (sims.length < 3 && sims.indexOf(c.from) < 0) sims.push(c.from);
+    });
+    if (pts.length < 2) { pts = []; sims = []; }
+    if (pts.length) {
+      var w = Math.round((full * 0.5) / pts.length * 10) / 10;
+      pts.forEach(function (p) { p.w = w; });
+    }
+    return {
+      id: "free-" + Date.now().toString(36),
+      kind: kind,
+      full: full, subj: subj || "", q: q, mat: mat, asks: "", type: freeType(q, kind === "material"),
+      pts: pts.slice(0, 8), free: true,
+      sims: sims.map(function (t) { return { q: "同题型采分点", type: t }; })
+    };
+  }
+
+  function aiFree(item, answer, local, cfg) {
+    cfg = cfg || aiConfig();
+    var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
+    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var model = cfg.model || p.model;
+    var key = cfg.key || "";
+    if (!key) return Promise.reject(new Error("还没填 API Key / Base URL（AI 设置里填 DeepSeek 或百炼）"));
+    var ref = (item.pts || []).map(function (x, i) {
+      return (i + 1) + ". " + (x.disp || x.t) + "：" + String(x.body || "").slice(0, 70);
+    }).join("\n") || "（题库没有相似题，请自己按 333 教材口径列采分点）";
+    var sys = "你是 333 教育综合考研阅卷老师，按采分点＋言之有理判分，只输出 JSON。";
+    var user = [
+      "【判分口径】", PLAYBOOK, "",
+      "【题目】", String(item.q || "").slice(0, 800),
+      item.mat ? "\n【材料】\n" + String(item.mat).slice(0, 1400) : "",
+      "\n【满分】", String(item.full) + " 分（" + String(item.full * 0.5) + " 分观点/原理 + " + String(item.full * 0.5) + " 分论证/材料）",
+      "\n【题库相似题的采分点（参考，不是唯一答案；若题目与它无关，自行按 333 教材给采分点）】", ref,
+      "\n【学生作答】", String(answer || "").slice(0, 2200),
+      "\n先自己列出本题应得的 4–6 个采分点，再逐条对照学生作答给分；允许「言之有理」的额外观点，但整点术语错误不给分。",
+      "只输出 JSON：{\"score\":数字,\"parts\":[{\"k\":\"观点/原理\",\"got\":数字,\"max\":数字},{\"k\":\"论证/材料\",\"got\":数字,\"max\":数字}],\"hits\":[{\"t\":\"命中的点\",\"why\":\"哪句话体现\"}],\"misses\":[{\"t\":\"本该写到的点\",\"why\":\"为什么该有\",\"fix\":\"怎么补\"}],\"bright\":[\"亮点\"],\"advice\":[\"建议\"],\"comment\":\"总评\",\"sample\":\"可背模板句\"}"
+    ].join("\n");
+    return post(base + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+      body: JSON.stringify({ model: model, temperature: 0.2, messages: [{ role: "system", content: sys }, { role: "user", content: user }] })
+    })
+      .then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+        return r.json();
+      })
+      .then(function (j) {
+        var c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        if (!c) throw new Error("返回里没有内容");
+        var m = c.match(/\{[\s\S]*\}/);
+        if (!m) throw new Error("返回的不是 JSON");
+        return normAI(JSON.parse(m[0]), item, local);
+      });
+  }
+
   function key0(cfg) { return !!(cfg && cfg.key); }
 
   root.K3G = {
@@ -17349,7 +17517,10 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
     aiSave: aiSave,
     aiGrade: aiGrade,
     aiVision: aiVision,
-    aiMake: aiMake
+    aiMake: aiMake,
+    freeItem: freeItem,
+    aiFree: aiFree,
+    similarItems: similarItems
   };
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
@@ -18781,6 +18952,7 @@ function ztMetaOf(y) {
   var S = {
     item: null, ans: "", res: null, ai: null, busy: "", msg: "",
     f: "all", q: "", show: 24, custom: false, cq: "", cmat: "", cfull: 15,
+    cans: "", csub: "edu-principle", cmsg: "", freeIt: null, freeSims: null,
     ansOpen: false, drill: null, drillText: "", drillRes: null, hist: true,
     img: "", imgName: "", topic: "", genBusy: ""
   };
@@ -18796,7 +18968,11 @@ function ztMetaOf(y) {
   function byId(id) { for (var i = 0; i < items().length; i++) if (items()[i].id === id) return items()[i]; return null; }
 
   function subjName(id) {
-    var m = { ep: "教原", cn: "中教史", wj: "外教史", xl: "教心" };
+    var m = {
+      "ep": "教育学原理", "cn": "中国教育史", "wj": "外国教育史", "xl": "教育心理学",
+      "edu-principle": "教育学原理", "edu-china": "中国教育史",
+      "edu-foreign": "外国教育史", "edu-psych": "教育心理学"
+    };
     return m[id] || id || "";
   }
   function srcName(it) {
@@ -18866,7 +19042,7 @@ function ztMetaOf(y) {
   function recHtml() {
     var recs = loadRecs().slice(0, 12);
     if (!recs.length) return "";
-    var h = '<div class="section-title"><h3>最近批改</h3><button class="ghost-btn gr-recdel" id="grRecDel">清空</button></div><div class="mcard gr-recs">';
+    var h = '<div class="section-title gr-rec-head">最近批改<button class="ghost-btn gr-recdel" id="grRecDel">清空</button></div><div class="mcard gr-recs">';
     recs.forEach(function (r) {
       h += '<button class="gr-rec" data-rec="' + esc(r.id) + '">';
       h += '<span class="gr-rec-s">' + r.score + '<i>/' + r.full + "</i></span>";
@@ -18891,6 +19067,8 @@ function ztMetaOf(y) {
   function pickerHtml() {
     var list = filterList();
     var h = "";
+    h += '<div class="gr-freebar"><button class="btn gr-freebtn" id="grCustom">✍ 自由批改 · 任意题目（不用题库）</button>' +
+      '<span class="gr-freehint">不在题库里的题、网上的模拟题，粘进来就能批</span></div>';
     h += '<div class="gr-chips">';
     [["all", "全部 " + items().length], ["essay", "论述 " + items().filter(function (i) { return i.kind === "essay"; }).length],
       ["material", "材料 " + items().filter(function (i) { return i.kind === "material"; }).length],
@@ -18913,18 +19091,25 @@ function ztMetaOf(y) {
     if (list.length > show.length) {
       h += '<div class="gr-more"><button class="ghost-btn" id="grMore">再显示 ' + Math.min(24, list.length - show.length) + " 题</button></div>";
     }
-    h += '<div class="gr-foot"><button class="ghost-btn" id="grCustom">✍ 自定义题目（自己录题）</button>';
-    h += '<button class="ghost-btn" data-go="drill">⚡ 去速练大题</button></div>';
+    h += '<div class="gr-foot"><button class="ghost-btn" data-go="drill">⚡ 去速练大题</button></div>';
     return h;
   }
 
+  // 自由批改：任意题目都能批，不依赖题库；AI 会拿「题库相似题的采分点 + 自己的判断」来判
   function customHtml() {
-    var h = '<div class="section-title"><h3>自定义题目</h3></div><div class="mcard gr-custom">';
-    h += '<label class="gr-lab">题目 / 材料</label><textarea id="grCq" rows="4" placeholder="把题目或材料粘进来…">' + esc(S.cq) + "</textarea>";
-    h += '<label class="gr-lab">材料（可选）</label><textarea id="grCmat" rows="3" placeholder="材料分析题把材料原文粘这里">' + esc(S.cmat) + "</textarea>";
-    h += '<div class="gr-row"><label class="gr-lab">满分</label><input id="grCfull" type="number" min="5" max="40" value="' + (+S.cfull || 15) + '"></div>';
-    h += '<div class="gr-tools"><button class="btn" id="grCustomGo">开始批改这道题</button><button class="ghost-btn" id="grCBack">返回题库</button></div>';
-    h += '<div class="gr-msg">自定义题目没有采分点库：本地判分只看结构、篇幅与材料引用，想要内容分请配 AI Key 用「AI 精批」。</div>';
+    var h = '<div class="section-title">✍ 自由批改 · 任意题目</div><div class="mcard gr-custom">';
+    h += '<div class="gr-free-tip">不用在题库里选题：把题目（和材料）粘进来，写完答案就能批。配了 AI Key 会参考题库里相似题的采分点，再按 333 的判分口径给分。</div>';
+    h += '<label class="gr-lab">题目</label><textarea id="grCq" rows="3" placeholder="例：试述蔡元培「五育并举」的教育方针及其影响。">' + esc(S.cq) + "</textarea>";
+    h += '<label class="gr-lab">材料（材料题才要）</label><textarea id="grCmat" rows="3" placeholder="材料分析题把材料原文粘这里；论述题留空。">' + esc(S.cmat) + "</textarea>";
+    h += '<div class="gr-row gr-crow"><label class="gr-lab">满分</label><input id="grCfull" type="number" min="5" max="40" value="' + (+S.cfull || 15) + '">';
+    h += '<label class="gr-lab">科目</label><select id="grCsub" class="ks-input">';
+    [["edu-principle", "教育学原理"], ["edu-china", "中国教育史"], ["edu-foreign", "外国教育史"], ["edu-psych", "教育心理学"]].forEach(function (s) {
+      h += '<option value="' + s[0] + '"' + (S.csub === s[0] ? " selected" : "") + ">" + s[1] + "</option>";
+    });
+    h += "</select></div>";
+    h += '<div class="gr-tools"><button class="btn" id="grCustomGo">下一步：写我的答案</button>' +
+      '<button class="ghost-btn" id="grCBack">返回题库选题</button></div>';
+    h += '<div class="gr-msg">' + (S.cmsg ? esc(S.cmsg) : "判分时会先找题库里相似的题，拿它的采分点当参考；配了 AI Key 再让模型结合 333 判分口径给分。") + "</div>";
     h += "</div>";
     return h;
   }
@@ -18971,7 +19156,11 @@ function ztMetaOf(y) {
     }
     if (res.hits && res.hits.length) {
       h += '<div class="gr-block"><h4>踩到的点</h4><div class="gr-tags">';
-      res.hits.forEach(function (x) { h += '<span class="gr-tag ok">' + esc(x) + "</span>"; });
+      res.hits.forEach(function (x) {
+        var t = typeof x === "string" ? x : String((x && (x.t || x.title)) || "");
+        var half = typeof x === "object" && x && x.level != null && x.level < 1;
+        h += '<span class="gr-tag ' + (half ? "half" : "ok") + '">' + esc(t) + (half ? "<i>半</i>" : "") + "</span>";
+      });
       h += "</div></div>";
     }
     if (res.misses && res.misses.length) {
@@ -19021,10 +19210,24 @@ function ztMetaOf(y) {
     return h;
   }
 
+  // 关键词清洗：只留像「教育目的」「大学区制」这种术语，挡掉「该主张的优点是」「B.批判社会本位论」这类碎片
+  function cleanKw(k) {
+    k = String(k || "").trim();
+    if (k.length < 3 || k.length > 12) return "";
+    if (!/^[\u4e00-\u9fa5·（）()]+$/.test(k)) return "";           // 含字母、数字、标点的一律不要
+    if (/^(该|其|此|这|那|本|上述|以下|其中|如|若)/.test(k)) return "";
+    if (/(的|是|属|有|了|吗|呢|吧|与|和|及|或)$/.test(k)) return "";
+    if (/优点|缺点|特点|意义|原因|措施|启示|主张的|看法|观点是/.test(k) && k.length < 8) return "";
+    return k;
+  }
+
   function linksHtml(it) {
     var kws = [];
-    (it.pts || []).slice(0, 3).forEach(function (p) { (p.kw || []).slice(0, 2).forEach(function (k) { kws.push(k); }); });
-    kws = kws.filter(function (k, i) { return k && k.length >= 2 && kws.indexOf(k) === i; }).slice(0, 5);
+    (it.pts || []).slice(0, 4).forEach(function (p) { (p.kw || []).slice(0, 2).forEach(function (k) { kws.push(k); }); });
+    // 采分点标题本身就是词组，优先当知识点（去掉括号里的说明）
+    (it.pts || []).slice(0, 3).forEach(function (p) { kws.push(String(p.t || "").replace(/（[^）]*）/g, "").replace(/^[^·]{0,10}·/, "")); });
+    kws = kws.map(cleanKw).filter(function (k, i, a) { return k && a.indexOf(k) === i; }).slice(0, 5);
+    if (!kws.length) return "";
     var h = '<div class="gr-links">';
     h += '<span class="gr-link-lab">相关知识点：</span>';
     kws.forEach(function (k) {
@@ -19049,14 +19252,20 @@ function ztMetaOf(y) {
 
   A3.views.grader = function () {
     var it = S.item;
+    // 自由批改是一等入口：点进来直接给表单，不再叠在题库列表下面
+    if (!it && S.custom) {
+      app.innerHTML = customHtml();
+      bindPicker();
+      try { window.scrollTo(0, 0); } catch (e) {}
+      return;
+    }
     var h = '<section class="hero"><h2>🧮 大题批改室</h2>';
     h += "<p>一道一道来：选/粘题目 → 写（或粘）你的答案 → 本地按采分点判分；配好 AI 接口可再精批一次。判分口径：论述 = 观点 + 论证各半，材料 = 原理 + 结合材料各半。</p></section>";
     h += statsHtml();
     h += rubricHtml();
 
     if (!it) {
-      if (S.custom) h += customHtml();
-      else h += pickerHtml();
+      h += pickerHtml();
       h += recHtml();
       app.innerHTML = h;
       bindPicker();
@@ -19083,8 +19292,14 @@ function ztMetaOf(y) {
 
     if (S.res) {
       h += resultHtml(it, S.res);
+      if (it.free && it.sims && it.sims.length) {
+        h += '<div class="gr-block gr-sims"><h4>📚 参考了题库里的相似题</h4><ul>';
+        it.sims.forEach(function (x) { h += "<li>" + esc(x.q) + (x.type ? '（' + esc(x.type) + "）" : "") + "</li>"; });
+        h += "</ul><div class=\"gr-free-tip\">这些题的采分点只是参考；题目不一样时，以你写的这道题为准。</div></div>";
+      }
       h += linksHtml(it);
-      h += ansHtml(it);
+      if (!it.free) h += ansHtml(it);
+      else if ((it.pts || []).length) h += ansHtml(it);
     }
     app.innerHTML = h;
     bindGrader(it);
@@ -19126,12 +19341,15 @@ function ztMetaOf(y) {
     if (cq) cq.oninput = function () { S.cq = cq.value; };
     if (cm) cm.oninput = function () { S.cmat = cm.value; };
     if (cf) cf.oninput = function () { S.cfull = +cf.value || 15; };
+    var csub = document.getElementById("grCsub");
+    if (csub) csub.onchange = function () { S.csub = csub.value; };
     var go = document.getElementById("grCustomGo");
     if (go) {
       go.onclick = function () {
-        if (!S.cq.trim()) { S.msg = "先把题目粘进来"; return; }
-        S.item = { id: "custom", kind: "material", full: +S.cfull || 15, subj: "", q: S.cq, mat: S.cmat, pts: [], ans: "", type: "自定义" };
-        S.custom = false; S.res = null; S.ans = ""; A3.render();
+        if (!S.cq.trim()) { S.cmsg = "先把题目粘进来"; A3.render(); return; }
+        var free = (window.K3G && K3G.freeItem) ? K3G.freeItem(S.cq, S.cmat, S.cfull, S.csub) : null;
+        S.item = free || { id: "custom", kind: "essay", full: +S.cfull || 15, subj: S.csub, q: S.cq, mat: S.cmat, pts: [], ans: "", type: "自由批改", free: true };
+        S.custom = false; S.res = null; S.ans = ""; S.msg = ""; A3.render();
       };
     }
     A3.bindGo();
@@ -19225,7 +19443,8 @@ function ztMetaOf(y) {
     A3.render();
     var local = null;
     try { local = G.grade(it, S.ans); } catch (e) {}
-    G.aiGrade(it, S.ans, local, cfg).then(function (o) {
+    var job = (it.free && G.aiFree) ? G.aiFree(it, S.ans, local, cfg) : G.aiGrade(it, S.ans, local, cfg);
+    job.then(function (o) {
       o.rate = it.full ? (+o.score || 0) / it.full : 0;
       S.res = o; S.busy = ""; S.msg = "AI 批改完成，可以对照本地判分。";
       saveRec({ id: it.id, kind: it.kind, score: (+o.score || 0).toFixed(1), full: it.full, rate: o.rate, title: it.q.slice(0, 24), at: new Date().toISOString() });
