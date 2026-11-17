@@ -333,8 +333,9 @@
     h += qCardHtml(it);
     h += '<div class="mcard gr-write"><label class="gr-lab">我的作答 <span id="grCnt2" class="gr-cnt">' + S.ans.length + " 字</span></label>";
     h += '<textarea id="grAns" rows="10" placeholder="按「小标题：一句话说明」的分点写法作答；不会写就先写小标题，也算踩点。">' + esc(S.ans) + "</textarea>";
-    h += '<div class="gr-photo"><label class="ghost-btn" for="grImg">📷 拍/选答题卡</label>' +
-      '<input id="grImg" type="file" accept="image/*" style="display:none">' +
+    h += '<div class="gr-photo"><span class="gr-pick"><label class="ghost-btn" for="grImg">📷 拍/选答题卡</label>' +
+      '<input id="grImg" class="gr-file" type="file" accept="image/*">' +
+      '</span>' +
       (S.img ? '<img class="gr-thumb" id="grThumb" src="' + S.img + '" alt="答题卡">' +
         '<button class="ghost-btn" id="grOcr">识图转文字</button>' +
         '<button class="ghost-btn" id="grImgDel">删掉图</button>' : '') +
@@ -430,6 +431,8 @@
     var ai = document.getElementById("grAI");
     if (ai) ai.onclick = function () { runAI(it); };
     var fi = document.getElementById("grImg");
+    var lb = app.querySelector(".gr-pick label");
+    if (lb && fi) lb.onclick = function (e) { e.preventDefault(); try { fi.click(); } catch (err) {} };
     if (fi) fi.onchange = function () {
       var f = fi.files && fi.files[0];
       if (!f) return;

@@ -2692,6 +2692,10 @@ html[data-theme="dark"] .gr-msg.ok{color:#4ade80}
 .gr-reset:active{background:var(--soft,#eef4ff)}
 html[data-theme="dark"] .gr-reset{background:#1b2536;color:var(--ink-2);border-color:var(--line)}
 
+/* 拍照/选图：把 input 铺在按钮上，安卓 WebView 也能点到原生选择器 */
+.gr-pick{position:relative;display:inline-flex;align-items:center}
+.gr-file{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;font-size:0;cursor:pointer;z-index:2}
+
 </style>
 </head>
 <body>
@@ -19428,8 +19432,9 @@ function ztMetaOf(y) {
     h += qCardHtml(it);
     h += '<div class="mcard gr-write"><label class="gr-lab">我的作答 <span id="grCnt2" class="gr-cnt">' + S.ans.length + " 字</span></label>";
     h += '<textarea id="grAns" rows="10" placeholder="按「小标题：一句话说明」的分点写法作答；不会写就先写小标题，也算踩点。">' + esc(S.ans) + "</textarea>";
-    h += '<div class="gr-photo"><label class="ghost-btn" for="grImg">📷 拍/选答题卡</label>' +
-      '<input id="grImg" type="file" accept="image/*" style="display:none">' +
+    h += '<div class="gr-photo"><span class="gr-pick"><label class="ghost-btn" for="grImg">📷 拍/选答题卡</label>' +
+      '<input id="grImg" class="gr-file" type="file" accept="image/*">' +
+      '</span>' +
       (S.img ? '<img class="gr-thumb" id="grThumb" src="' + S.img + '" alt="答题卡">' +
         '<button class="ghost-btn" id="grOcr">识图转文字</button>' +
         '<button class="ghost-btn" id="grImgDel">删掉图</button>' : '') +
@@ -19525,6 +19530,8 @@ function ztMetaOf(y) {
     var ai = document.getElementById("grAI");
     if (ai) ai.onclick = function () { runAI(it); };
     var fi = document.getElementById("grImg");
+    var lb = app.querySelector(".gr-pick label");
+    if (lb && fi) lb.onclick = function (e) { e.preventDefault(); try { fi.click(); } catch (err) {} };
     if (fi) fi.onchange = function () {
       var f = fi.files && fi.files[0];
       if (!f) return;
