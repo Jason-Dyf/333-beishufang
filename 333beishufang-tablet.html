@@ -16865,7 +16865,18 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
 
   var STOP = /[\s\u3000，。；：、！？“”‘’（）()【】《》〈〉·—…,.;:!?"'\-]/g;
 
-  function norm(s) {
+  /**
+ * 把采分点标题压成短语：去空白、去末尾括号注释、去书名引号，再看长度截断，避免出现半截括号。
+ */
+function shortName(v) {
+  var s = String(v || "").replace(/\s+/g, "");
+  s = s.replace(/[（(][^（）()]{2,24}[）)]\s*$/, "");
+  s = s.replace(/[（(][^（）()]{0,24}[…\.]{0,3}$/, "");
+  s = s.replace(/[《》「」“”]/g, "");
+  return s.slice(0, 12);
+}
+
+function norm(s) {
     return String(s == null ? "" : s).replace(STOP, "").toLowerCase();
   }
 
@@ -16913,7 +16924,9 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
       var b = String(body || "").replace(/\s+/g, "").replace(/^[，。；：、]+/, "");
       if (b.length >= 6) return b.slice(0, 14) + (b.length > 14 ? "…" : "");
     }
-    return t.length > 18 ? t.slice(0, 18) + "…" : t;
+    if (t.length > 18) { t = t.replace(/[（(][^（）()]{2,24}[）)]$/, "").replace(/[（(][^（）()]*$/, ""); if (t.length > 16) t = t.slice(0, 16) + "…"; return t; }
+    if (t.length > 16) { t = t.replace(/[（(][^（）()]{2,24}[）)]$/, "").replace(/[（(][^（）()]*$/, ""); if (t.length > 14) t = t.slice(0, 14) + "…"; return t; }
+    return t;
   }
 
   // 分点识别：行首编号、行首四字小标题、句首「一、」、行内 【小标题】
@@ -17102,7 +17115,7 @@ window.K3_QSRC={"dd1000|edu-principle|ep-01|1":"dd_ep_ti:1","dd1000|edu-principl
 
     // 亮点
     var bright = [];
-    if (hits.length) bright.push("命中了 " + hits.filter(function (h) { return h.level >= 1; }).length + " 个完整采分点、" + hits.filter(function (h) { return h.level < 1; }).length + " 个半命中，主要落在「" + hits.slice(0, 3).map(function (h) { return String(h.disp || h.t || "").slice(0, 10); }).join("」「") + "」。");
+    if (hits.length) bright.push("命中了 " + hits.filter(function (h) { return h.level >= 1; }).length + " 个完整采分点、" + hits.filter(function (h) { return h.level < 1; }).length + " 个半命中，主要落在「" + hits.slice(0, 3).map(function (h) { return shortName(h.disp || h.t); }).join("」「") + "」。");
     if (causal >= 2) bright.push("有 " + causal + " 处因果论证，说明不是只罗列观点。");
     if (isMat && quotes.length && idea >= full * 0.2) bright.push("引用了 " + quotes.length + " 处材料原句，原理能落到材料上。");
     if (!isMat && evalN) bright.push("有独立评价句，观点之外给了判断。");
@@ -19165,7 +19178,7 @@ function ztMetaOf(y) {
     if (res.hits && res.hits.length) {
       h += '<div class="gr-block"><h4>踩到的点</h4><div class="gr-tags">';
       res.hits.forEach(function (x) {
-        var t = typeof x === "string" ? x : String((x && (x.t || x.title)) || "");
+        var t = typeof x === "string" ? x : String((x && (x.disp || x.t || x.title)) || "");
         var half = typeof x === "object" && x && x.level != null && x.level < 1;
         h += '<span class="gr-tag ' + (half ? "half" : "ok") + '">' + esc(t) + (half ? "<i>半</i>" : "") + "</span>";
       });
@@ -19174,7 +19187,7 @@ function ztMetaOf(y) {
     if (res.misses && res.misses.length) {
       h += '<div class="gr-block"><h4>❌ 扣分依据 / 还缺的点</h4><ul>';
       res.misses.forEach(function (x) {
-        var t = typeof x === "string" ? x : ((x.t || "") + (x.why ? "：" + x.why : ""));
+        var t = typeof x === "string" ? x : ((x.disp || x.t || "") + (x.why ? "：" + x.why : ""));
         h += "<li>" + A3.md(t) + "</li>";
       });
       h += "</ul></div>";
@@ -19506,7 +19519,7 @@ function ztMetaOf(y) {
       h += '<span class="gr-rate">估分（按思路完整度：分点数 ' + r.n + " / 点了标题的 " + r.good + " / 四字小标题 " + r.heads4 + "）</span></div>";
       h += '<div class="gr-block"><h4>点到的采分点（' + hits.length + "）</h4><div class=\"gr-tags\">";
       if (!hits.length) h += '<span class="gr-tag">暂时一个都没对上</span>';
-      hits.forEach(function (x) { h += '<span class="gr-tag ok">' + esc(x) + "</span>"; });
+      hits.forEach(function (x) { h += '<span class="gr-tag ok">' + esc(typeof x === "string" ? x : (x.disp || x.t || "")) + "</span>"; });
       h += "</div></div>";
       if (missed.length) {
         h += '<div class="gr-block"><h4>还没写到的点（' + missed.length + "）</h4><ul>";

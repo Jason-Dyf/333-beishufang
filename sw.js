@@ -1,5 +1,5 @@
 /* 333 背书房 · 离线缓存（stale-while-revalidate） */
-var CACHE = "k333-v7";
+var CACHE = "k333-v8";
 self.addEventListener("install", function () { self.skipWaiting(); });
 self.addEventListener("activate", function (e) {
   e.waitUntil((async function () {

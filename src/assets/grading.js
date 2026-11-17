@@ -6,7 +6,18 @@
 
   var STOP = /[\s\u3000，。；：、！？“”‘’（）()【】《》〈〉·—…,.;:!?"'\-]/g;
 
-  function norm(s) {
+  /**
+ * 把采分点标题压成短语：去空白、去末尾括号注释、去书名引号，再看长度截断，避免出现半截括号。
+ */
+function shortName(v) {
+  var s = String(v || "").replace(/\s+/g, "");
+  s = s.replace(/[（(][^（）()]{2,24}[）)]\s*$/, "");
+  s = s.replace(/[（(][^（）()]{0,24}[…\.]{0,3}$/, "");
+  s = s.replace(/[《》「」“”]/g, "");
+  return s.slice(0, 12);
+}
+
+function norm(s) {
     return String(s == null ? "" : s).replace(STOP, "").toLowerCase();
   }
 
@@ -54,7 +65,9 @@
       var b = String(body || "").replace(/\s+/g, "").replace(/^[，。；：、]+/, "");
       if (b.length >= 6) return b.slice(0, 14) + (b.length > 14 ? "…" : "");
     }
-    return t.length > 18 ? t.slice(0, 18) + "…" : t;
+    if (t.length > 18) { t = t.replace(/[（(][^（）()]{2,24}[）)]$/, "").replace(/[（(][^（）()]*$/, ""); if (t.length > 16) t = t.slice(0, 16) + "…"; return t; }
+    if (t.length > 16) { t = t.replace(/[（(][^（）()]{2,24}[）)]$/, "").replace(/[（(][^（）()]*$/, ""); if (t.length > 14) t = t.slice(0, 14) + "…"; return t; }
+    return t;
   }
 
   // 分点识别：行首编号、行首四字小标题、句首「一、」、行内 【小标题】
@@ -243,7 +256,7 @@
 
     // 亮点
     var bright = [];
-    if (hits.length) bright.push("命中了 " + hits.filter(function (h) { return h.level >= 1; }).length + " 个完整采分点、" + hits.filter(function (h) { return h.level < 1; }).length + " 个半命中，主要落在「" + hits.slice(0, 3).map(function (h) { return String(h.disp || h.t || "").slice(0, 10); }).join("」「") + "」。");
+    if (hits.length) bright.push("命中了 " + hits.filter(function (h) { return h.level >= 1; }).length + " 个完整采分点、" + hits.filter(function (h) { return h.level < 1; }).length + " 个半命中，主要落在「" + hits.slice(0, 3).map(function (h) { return shortName(h.disp || h.t); }).join("」「") + "」。");
     if (causal >= 2) bright.push("有 " + causal + " 处因果论证，说明不是只罗列观点。");
     if (isMat && quotes.length && idea >= full * 0.2) bright.push("引用了 " + quotes.length + " 处材料原句，原理能落到材料上。");
     if (!isMat && evalN) bright.push("有独立评价句，观点之外给了判断。");

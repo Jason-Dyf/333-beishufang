@@ -214,7 +214,7 @@
     if (res.hits && res.hits.length) {
       h += '<div class="gr-block"><h4>踩到的点</h4><div class="gr-tags">';
       res.hits.forEach(function (x) {
-        var t = typeof x === "string" ? x : String((x && (x.t || x.title)) || "");
+        var t = typeof x === "string" ? x : String((x && (x.disp || x.t || x.title)) || "");
         var half = typeof x === "object" && x && x.level != null && x.level < 1;
         h += '<span class="gr-tag ' + (half ? "half" : "ok") + '">' + esc(t) + (half ? "<i>半</i>" : "") + "</span>";
       });
@@ -223,7 +223,7 @@
     if (res.misses && res.misses.length) {
       h += '<div class="gr-block"><h4>❌ 扣分依据 / 还缺的点</h4><ul>';
       res.misses.forEach(function (x) {
-        var t = typeof x === "string" ? x : ((x.t || "") + (x.why ? "：" + x.why : ""));
+        var t = typeof x === "string" ? x : ((x.disp || x.t || "") + (x.why ? "：" + x.why : ""));
         h += "<li>" + A3.md(t) + "</li>";
       });
       h += "</ul></div>";
@@ -555,7 +555,7 @@
       h += '<span class="gr-rate">估分（按思路完整度：分点数 ' + r.n + " / 点了标题的 " + r.good + " / 四字小标题 " + r.heads4 + "）</span></div>";
       h += '<div class="gr-block"><h4>点到的采分点（' + hits.length + "）</h4><div class=\"gr-tags\">";
       if (!hits.length) h += '<span class="gr-tag">暂时一个都没对上</span>';
-      hits.forEach(function (x) { h += '<span class="gr-tag ok">' + esc(x) + "</span>"; });
+      hits.forEach(function (x) { h += '<span class="gr-tag ok">' + esc(typeof x === "string" ? x : (x.disp || x.t || "")) + "</span>"; });
       h += "</div></div>";
       if (missed.length) {
         h += '<div class="gr-block"><h4>还没写到的点（' + missed.length + "）</h4><ul>";
