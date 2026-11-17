@@ -2638,6 +2638,12 @@ html[data-theme="dark"] .gr-sample{background:#18202e;border-color:#2b3648}
 html[data-theme="dark"] .gr-rubric{background:#151d2c;border-color:#26303f}
 html[data-theme="dark"] .gr-rubric li{color:#b7c4da}
 
+/* 批改：引到的材料原句 / 清空记录 */
+.gr-quotes li{font-size:12.5px;line-height:1.6;color:var(--ink-2,#42506a);margin:2px 0}
+html[data-theme="dark"] .gr-quotes li{color:#c9d6ea}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gr-recdel{padding:3px 10px;font-size:12px}
+
 </style>
 </head>
 <body>
@@ -18860,7 +18866,7 @@ function ztMetaOf(y) {
   function recHtml() {
     var recs = loadRecs().slice(0, 12);
     if (!recs.length) return "";
-    var h = '<div class="section-title"><h3>最近批改</h3></div><div class="mcard gr-recs">';
+    var h = '<div class="section-title"><h3>最近批改</h3><button class="ghost-btn gr-recdel" id="grRecDel">清空</button></div><div class="mcard gr-recs">';
     recs.forEach(function (r) {
       h += '<button class="gr-rec" data-rec="' + esc(r.id) + '">';
       h += '<span class="gr-rec-s">' + r.score + '<i>/' + r.full + "</i></span>";
@@ -18952,6 +18958,12 @@ function ztMetaOf(y) {
     h += '<span class="gr-rate">得分率 ' + Math.round((res.rate || 0) * 100) + "%</span>";
     h += '<span class="gr-mode">' + (res.mode === "ai" ? "AI 精批" : "本地采分点判分") + "</span></div>";
     h += partsHtml(res);
+    if (res.quotes && res.quotes.length) {
+      h += '<div class="gr-block gr-quotes"><h4>📌 用到的材料原句（' + res.quotes.length + ' 处）</h4><ul>';
+      res.quotes.slice(0, 4).forEach(function (q) { h += "<li>「" + esc(String(q).slice(0, 56)) + "…」</li>"; });
+      h += "</ul></div>";
+    }
+
     if (res.bright && res.bright.length) {
       h += '<div class="gr-block"><h4>✅ 亮点与得分依据</h4><ul>';
       res.bright.forEach(function (x) { h += "<li>" + A3.md(x) + "</li>"; });
@@ -19102,6 +19114,8 @@ function ztMetaOf(y) {
         S.item = it; S.ans = ""; S.res = null; S.msg = ""; A3.render();
       };
     });
+    var rd = document.getElementById("grRecDel");
+    if (rd) rd.onclick = function () { try { localStorage.removeItem("k3_grade_v1"); } catch (e) {} A3.render(); };
     var more = document.getElementById("grMore");
     if (more) more.onclick = function () { S.show += 24; A3.render(); };
     var cu = document.getElementById("grCustom");

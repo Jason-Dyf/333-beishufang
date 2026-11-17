@@ -900,3 +900,9 @@ html[data-theme="dark"] .gr-sample{background:#18202e;border-color:#2b3648}
 .gr-rubric b{color:var(--blue,#1d4ed8)}
 html[data-theme="dark"] .gr-rubric{background:#151d2c;border-color:#26303f}
 html[data-theme="dark"] .gr-rubric li{color:#b7c4da}
+
+/* 批改：引到的材料原句 / 清空记录 */
+.gr-quotes li{font-size:12.5px;line-height:1.6;color:var(--ink-2,#42506a);margin:2px 0}
+html[data-theme="dark"] .gr-quotes li{color:#c9d6ea}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gr-recdel{padding:3px 10px;font-size:12px}

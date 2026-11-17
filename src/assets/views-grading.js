@@ -94,7 +94,7 @@
   function recHtml() {
     var recs = loadRecs().slice(0, 12);
     if (!recs.length) return "";
-    var h = '<div class="section-title"><h3>最近批改</h3></div><div class="mcard gr-recs">';
+    var h = '<div class="section-title"><h3>最近批改</h3><button class="ghost-btn gr-recdel" id="grRecDel">清空</button></div><div class="mcard gr-recs">';
     recs.forEach(function (r) {
       h += '<button class="gr-rec" data-rec="' + esc(r.id) + '">';
       h += '<span class="gr-rec-s">' + r.score + '<i>/' + r.full + "</i></span>";
@@ -186,6 +186,12 @@
     h += '<span class="gr-rate">得分率 ' + Math.round((res.rate || 0) * 100) + "%</span>";
     h += '<span class="gr-mode">' + (res.mode === "ai" ? "AI 精批" : "本地采分点判分") + "</span></div>";
     h += partsHtml(res);
+    if (res.quotes && res.quotes.length) {
+      h += '<div class="gr-block gr-quotes"><h4>📌 用到的材料原句（' + res.quotes.length + ' 处）</h4><ul>';
+      res.quotes.slice(0, 4).forEach(function (q) { h += "<li>「" + esc(String(q).slice(0, 56)) + "…」</li>"; });
+      h += "</ul></div>";
+    }
+
     if (res.bright && res.bright.length) {
       h += '<div class="gr-block"><h4>✅ 亮点与得分依据</h4><ul>';
       res.bright.forEach(function (x) { h += "<li>" + A3.md(x) + "</li>"; });
@@ -336,6 +342,8 @@
         S.item = it; S.ans = ""; S.res = null; S.msg = ""; A3.render();
       };
     });
+    var rd = document.getElementById("grRecDel");
+    if (rd) rd.onclick = function () { try { localStorage.removeItem("k3_grade_v1"); } catch (e) {} A3.render(); };
     var more = document.getElementById("grMore");
     if (more) more.onclick = function () { S.show += 24; A3.render(); };
     var cu = document.getElementById("grCustom");
