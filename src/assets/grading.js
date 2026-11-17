@@ -337,10 +337,51 @@ function norm(s) {
 
   // ---------- AI 精批（可选） ----------
   var PROVIDERS = {
-    deepseek: { name: "DeepSeek 官方", base: "https://api.deepseek.com/v1", model: "deepseek-chat" },
-    bailian: { name: "阿里百炼", base: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus" },
-    custom: { name: "自定义（OpenAI 兼容）", base: "", model: "" }
+    deepseek: {
+      name: "DeepSeek 官方",
+      base: "https://api.deepseek.com/v1",
+      model: "deepseek-chat",
+      models: ["deepseek-chat", "deepseek-reasoner"],
+      note: "Key 在 platform.deepseek.com 生成；Base 必须带 /v1。"
+    },
+    bailian: {
+      name: "阿里云百炼",
+      base: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      model: "qwen-plus",
+      models: ["qwen-plus", "qwen-max", "qwen-flash", "qwen-turbo", "qwen3-max", "qwen3-235b-a22b", "deepseek-v3.1", "kimi-k2-instruct", "glm-4.6"],
+      note: "百炼里任何「OpenAI 兼容」模型都能用：把控制台上的模型名原样填进来即可（qwen-plus / qwen-max / qwen3-max / deepseek-v3.1 / kimi-k2-instruct…）。"
+    },
+    custom: { name: "自定义（OpenAI 兼容）", base: "", model: "", models: [], note: "任何 OpenAI 兼容网关：Base 填到 /v1 为止，路径会自动补 /chat/completions。" }
   };
+
+  // 把用户手填的 Base 修成可用形态：补协议、去尾部斜杠、去误粘的 /chat/completions、给裸域名补默认路径
+  function normBase(base) {
+    var b = String(base || "").trim().replace(/[\s\u3000]+/g, "");
+    if (!b) return "";
+    if (!/^https?:\/\//i.test(b)) b = "https://" + b;
+    b = b.replace(/\/+$/, "");
+    b = b.replace(/\/chat\/completions$/i, "");
+    if (/^https?:\/\/api\.deepseek\.com$/i.test(b)) b += "/v1";
+    if (/^https?:\/\/dashscope\.aliyuncs\.com$/i.test(b)) b += "/compatible-mode/v1";
+    if (/^https?:\/\/dashscope\.aliyuncs\.com\/compatible-mode$/i.test(b)) b += "/v1";
+    if (/^https?:\/\/open\.bigmodel\.cn\/api\/paas\/v4$/i.test(b)) return b; // 智谱特殊：v4 直接当 base
+    if (/^https?:\/\/api\.moonshot\.cn$/i.test(b)) b += "/v1";
+    if (/^https?:\/\/api\.siliconflow\.cn$/i.test(b)) b += "/v1";
+    return b;
+  }
+
+  // 把 HTTP 错误翻成「下一步该改什么」，而不是丢一串英文
+  function explainErr(status, text) {
+    var t = String(text || "").replace(/\s+/g, " ").slice(0, 200);
+    var hint = "";
+    if (status === 401) hint = "Key 和这个地址不是一家的（常见：百炼的 Key 填到了 DeepSeek 的 Base），或者复制时少了字符。";
+    else if (status === 403) hint = "这个 Key 没有该模型权限，或账号没实名/欠费。";
+    else if (status === 404) hint = "模型名或 Base 路径不对：百炼是 …/compatible-mode/v1 + qwen-plus，DeepSeek 是 …/v1 + deepseek-chat。";
+    else if (status === 429) hint = "请求太密或额度用完，等一会儿再试。";
+    else if (status === 400) hint = "参数被拒：多半是模型名写错，或该模型不支持这个接口。";
+    else if (status >= 500) hint = "对方服务器的问题，换模型或过会儿再试。";
+    return "HTTP " + status + "：" + t + (hint ? "｜" + hint : "");
+  }
 
   function aiConfig() {
     try {
@@ -432,10 +473,53 @@ function norm(s) {
     });
   }
 
+  // 通用调用：所有 AI 功能都走这里，Base/模型/Key 的规范化与错误翻译只做一次
+  function aiChat(cfg, messages, opt) {
+    cfg = cfg || aiConfig();
+    opt = opt || {};
+    var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
+    var base = normBase(cfg.base || p.base);
+    var model = String(cfg.model || p.model || "").trim().replace(/\s+/g, "");
+    var key = String(cfg.key || "").trim().replace(/^Bearer\s+/i, "");
+    if (!base) return Promise.reject(new Error("还没填 Base URL"));
+    if (!model) return Promise.reject(new Error("还没填模型名"));
+    if (!key) return Promise.reject(new Error("还没填 API Key"));
+    var body = {
+      model: model,
+      temperature: opt.temperature != null ? opt.temperature : 0.2,
+      messages: messages
+    };
+    if (opt.maxTokens) body.max_tokens = opt.maxTokens;
+    var t0 = Date.now();
+    return post(base + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
+        return r.json();
+      })
+      .then(function (j) {
+        var c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        if (c && typeof c !== "string") c = (c.map ? c.map(function (x) { return x.text || ""; }).join("") : "");
+        if (!c) throw new Error("接口通了，但没返回内容（多半是模型名不支持 chat/completions）");
+        return { text: String(c), ms: Date.now() - t0, model: (j && j.model) || model, raw: j };
+      });
+  }
+
+  // 测试连接：发一句最小的 ping，只验证 Base+模型+Key 三者是否对得上
+  function aiPing(cfg) {
+    return aiChat(cfg, [{ role: "user", content: "ping，只回复两个字：pong" }], { maxTokens: 16, temperature: 0 })
+      .then(function (r) {
+        return { ok: true, ms: r.ms, model: r.model, text: String(r.text).trim().slice(0, 40), base: normBase((cfg || {}).base) };
+      });
+  }
+
   function aiGrade(item, answer, local, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
-    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var base = normBase(cfg.base || p.base);
     var model = cfg.model || p.model;
     var key = cfg.key || "";
     if (!base || !model || !key) {
@@ -452,7 +536,7 @@ function norm(s) {
       })
     })
       .then(function (r) {
-        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+        if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
         return r.json();
       })
       .then(function (j) {
@@ -468,7 +552,7 @@ function norm(s) {
 // ---------- 图片识别（可选，走百炼视觉模型） ----------
   function aiVision(imgUrl, cfg, hint) {
     cfg = cfg || aiConfig();
-    var base = (cfg.visionBase || "https://dashscope.aliyuncs.com/compatible-mode/v1").replace(/\/+$/, "");
+    var base = normBase(cfg.visionBase || "https://dashscope.aliyuncs.com/compatible-mode/v1");
     var model = cfg.visionModel || "qwen-vl-max";
     var key = cfg.visionKey || cfg.key || "";
     if (!key) return Promise.reject(new Error("图片识别要百炼的 Key（DeepSeek 不支持看图）"));
@@ -488,7 +572,7 @@ function norm(s) {
         }]
       })
     }).then(function (r) {
-      if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+      if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
       return r.json();
     }).then(function (j) {
       var c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
@@ -502,7 +586,7 @@ function norm(s) {
   function aiMake(topic, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
-    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var base = normBase(cfg.base || p.base);
     var model = cfg.model || p.model;
     if (!base || !key0(cfg)) return Promise.reject(new Error("还没配 AI 接口"));
     var sys = "你是 333 教育综合命题老师。仿统考风格出 1 道主观题，只输出 JSON。";
@@ -514,7 +598,7 @@ function norm(s) {
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + cfg.key },
       body: JSON.stringify({ model: model, temperature: 0.7, messages: [{ role: "system", content: sys }, { role: "user", content: user }] })
     }).then(function (r) {
-      if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 100)); });
+      if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
       return r.json();
     }).then(function (j) {
       var c = j.choices[0].message.content;
@@ -630,7 +714,7 @@ function norm(s) {
   function aiFree(item, answer, local, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
-    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var base = normBase(cfg.base || p.base);
     var model = cfg.model || p.model;
     var key = cfg.key || "";
     if (!key) return Promise.reject(new Error("还没填 API Key / Base URL（AI 设置里填 DeepSeek 或百炼）"));
@@ -654,7 +738,7 @@ function norm(s) {
       body: JSON.stringify({ model: model, temperature: 0.2, messages: [{ role: "system", content: sys }, { role: "user", content: user }] })
     })
       .then(function (r) {
-        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+        if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
         return r.json();
       })
       .then(function (j) {
@@ -668,6 +752,25 @@ function norm(s) {
 
   function key0(cfg) { return !!(cfg && cfg.key); }
 
+  // 浏览器直连最常见的是 TypeError: Failed to fetch（断网/跨域/代理），翻成人话
+  function friendly(e) {
+    var m = String((e && e.message) || e);
+    if (/Failed to fetch|NetworkError|Load failed|Network request failed|fetch failed/i.test(m)) {
+      return new Error("请求没发出去：先看网络（换 Wi-Fi / 关代理），再确认这个接口允许浏览器直连。Base 或模型名不会导致这个错。");
+    }
+    return e;
+  }
+
+  function guard(fn) {
+    return function () {
+      try {
+        return fn.apply(null, arguments).catch(function (e) { throw friendly(e); });
+      } catch (e) {
+        return Promise.reject(friendly(e));
+      }
+    };
+  }
+
   root.K3G = {
     norm: norm,
     cover: cover,
@@ -677,11 +780,15 @@ function norm(s) {
     providers: PROVIDERS,
     aiConfig: aiConfig,
     aiSave: aiSave,
-    aiGrade: aiGrade,
-    aiVision: aiVision,
-    aiMake: aiMake,
+    normBase: normBase,
+    explainErr: explainErr,
+    aiGrade: guard(aiGrade),
+    aiVision: guard(aiVision),
+    aiMake: guard(aiMake),
     freeItem: freeItem,
-    aiFree: aiFree,
+    aiFree: guard(aiFree),
+    aiPing: guard(aiPing),
+    aiChat: guard(aiChat),
     similarItems: similarItems
   };
 })(typeof window !== "undefined" ? window : globalThis);

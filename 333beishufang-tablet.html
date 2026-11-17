@@ -2676,6 +2676,19 @@ html[data-theme="dark"] #searchClear:hover { color: #8dc0ff; border-color: #3f6f
 html[data-theme="dark"] .ghost-btn { background: #1b2536; color: var(--ink-2); border-color: var(--line); }
 html[data-theme="dark"] .ghost-btn:hover { background: #223046; color: #d6e6ff; border-color: #3f6fa8; }
 
+/* AI 设置页：接口预览、模型快选、状态行 */
+.gr-endp{font-size:12px;color:var(--ink-3);line-height:1.7;margin:8px 0 2px;word-break:break-all}
+.gr-endp code{background:var(--soft,#eef4ff);padding:0 4px;border-radius:4px;font-size:11.5px;color:var(--ink-2)}
+.gr-models{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+.gr-models .chip{font-size:12px;padding:4px 9px}
+.gr-lab-tip{font-weight:400;font-size:11.5px;color:var(--ink-3)}
+.gr-msg.ok{color:#0f9d58}
+.gr-msg.bad{color:var(--red)}
+.gr-msg.wait{color:var(--ink-3)}
+html[data-theme="dark"] .gr-endp code{background:#1d2a3d;color:var(--ink-2)}
+html[data-theme="dark"] .gr-msg.ok{color:#4ade80}
+@media (max-width:560px){.gr-endp{font-size:11.5px}.gr-chips{gap:6px}.gr-chips .chip{padding:6px 9px;font-size:12.5px}.gr-models .chip{font-size:11.5px;padding:3px 8px}}
+
 </style>
 </head>
 <body>
@@ -17204,10 +17217,51 @@ function norm(s) {
 
   // ---------- AI 精批（可选） ----------
   var PROVIDERS = {
-    deepseek: { name: "DeepSeek 官方", base: "https://api.deepseek.com/v1", model: "deepseek-chat" },
-    bailian: { name: "阿里百炼", base: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus" },
-    custom: { name: "自定义（OpenAI 兼容）", base: "", model: "" }
+    deepseek: {
+      name: "DeepSeek 官方",
+      base: "https://api.deepseek.com/v1",
+      model: "deepseek-chat",
+      models: ["deepseek-chat", "deepseek-reasoner"],
+      note: "Key 在 platform.deepseek.com 生成；Base 必须带 /v1。"
+    },
+    bailian: {
+      name: "阿里云百炼",
+      base: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      model: "qwen-plus",
+      models: ["qwen-plus", "qwen-max", "qwen-flash", "qwen-turbo", "qwen3-max", "qwen3-235b-a22b", "deepseek-v3.1", "kimi-k2-instruct", "glm-4.6"],
+      note: "百炼里任何「OpenAI 兼容」模型都能用：把控制台上的模型名原样填进来即可（qwen-plus / qwen-max / qwen3-max / deepseek-v3.1 / kimi-k2-instruct…）。"
+    },
+    custom: { name: "自定义（OpenAI 兼容）", base: "", model: "", models: [], note: "任何 OpenAI 兼容网关：Base 填到 /v1 为止，路径会自动补 /chat/completions。" }
   };
+
+  // 把用户手填的 Base 修成可用形态：补协议、去尾部斜杠、去误粘的 /chat/completions、给裸域名补默认路径
+  function normBase(base) {
+    var b = String(base || "").trim().replace(/[\s\u3000]+/g, "");
+    if (!b) return "";
+    if (!/^https?:\/\//i.test(b)) b = "https://" + b;
+    b = b.replace(/\/+$/, "");
+    b = b.replace(/\/chat\/completions$/i, "");
+    if (/^https?:\/\/api\.deepseek\.com$/i.test(b)) b += "/v1";
+    if (/^https?:\/\/dashscope\.aliyuncs\.com$/i.test(b)) b += "/compatible-mode/v1";
+    if (/^https?:\/\/dashscope\.aliyuncs\.com\/compatible-mode$/i.test(b)) b += "/v1";
+    if (/^https?:\/\/open\.bigmodel\.cn\/api\/paas\/v4$/i.test(b)) return b; // 智谱特殊：v4 直接当 base
+    if (/^https?:\/\/api\.moonshot\.cn$/i.test(b)) b += "/v1";
+    if (/^https?:\/\/api\.siliconflow\.cn$/i.test(b)) b += "/v1";
+    return b;
+  }
+
+  // 把 HTTP 错误翻成「下一步该改什么」，而不是丢一串英文
+  function explainErr(status, text) {
+    var t = String(text || "").replace(/\s+/g, " ").slice(0, 200);
+    var hint = "";
+    if (status === 401) hint = "Key 和这个地址不是一家的（常见：百炼的 Key 填到了 DeepSeek 的 Base），或者复制时少了字符。";
+    else if (status === 403) hint = "这个 Key 没有该模型权限，或账号没实名/欠费。";
+    else if (status === 404) hint = "模型名或 Base 路径不对：百炼是 …/compatible-mode/v1 + qwen-plus，DeepSeek 是 …/v1 + deepseek-chat。";
+    else if (status === 429) hint = "请求太密或额度用完，等一会儿再试。";
+    else if (status === 400) hint = "参数被拒：多半是模型名写错，或该模型不支持这个接口。";
+    else if (status >= 500) hint = "对方服务器的问题，换模型或过会儿再试。";
+    return "HTTP " + status + "：" + t + (hint ? "｜" + hint : "");
+  }
 
   function aiConfig() {
     try {
@@ -17299,10 +17353,53 @@ function norm(s) {
     });
   }
 
+  // 通用调用：所有 AI 功能都走这里，Base/模型/Key 的规范化与错误翻译只做一次
+  function aiChat(cfg, messages, opt) {
+    cfg = cfg || aiConfig();
+    opt = opt || {};
+    var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
+    var base = normBase(cfg.base || p.base);
+    var model = String(cfg.model || p.model || "").trim().replace(/\s+/g, "");
+    var key = String(cfg.key || "").trim().replace(/^Bearer\s+/i, "");
+    if (!base) return Promise.reject(new Error("还没填 Base URL"));
+    if (!model) return Promise.reject(new Error("还没填模型名"));
+    if (!key) return Promise.reject(new Error("还没填 API Key"));
+    var body = {
+      model: model,
+      temperature: opt.temperature != null ? opt.temperature : 0.2,
+      messages: messages
+    };
+    if (opt.maxTokens) body.max_tokens = opt.maxTokens;
+    var t0 = Date.now();
+    return post(base + "/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
+        return r.json();
+      })
+      .then(function (j) {
+        var c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        if (c && typeof c !== "string") c = (c.map ? c.map(function (x) { return x.text || ""; }).join("") : "");
+        if (!c) throw new Error("接口通了，但没返回内容（多半是模型名不支持 chat/completions）");
+        return { text: String(c), ms: Date.now() - t0, model: (j && j.model) || model, raw: j };
+      });
+  }
+
+  // 测试连接：发一句最小的 ping，只验证 Base+模型+Key 三者是否对得上
+  function aiPing(cfg) {
+    return aiChat(cfg, [{ role: "user", content: "ping，只回复两个字：pong" }], { maxTokens: 16, temperature: 0 })
+      .then(function (r) {
+        return { ok: true, ms: r.ms, model: r.model, text: String(r.text).trim().slice(0, 40), base: normBase((cfg || {}).base) };
+      });
+  }
+
   function aiGrade(item, answer, local, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
-    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var base = normBase(cfg.base || p.base);
     var model = cfg.model || p.model;
     var key = cfg.key || "";
     if (!base || !model || !key) {
@@ -17319,7 +17416,7 @@ function norm(s) {
       })
     })
       .then(function (r) {
-        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+        if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
         return r.json();
       })
       .then(function (j) {
@@ -17335,7 +17432,7 @@ function norm(s) {
 // ---------- 图片识别（可选，走百炼视觉模型） ----------
   function aiVision(imgUrl, cfg, hint) {
     cfg = cfg || aiConfig();
-    var base = (cfg.visionBase || "https://dashscope.aliyuncs.com/compatible-mode/v1").replace(/\/+$/, "");
+    var base = normBase(cfg.visionBase || "https://dashscope.aliyuncs.com/compatible-mode/v1");
     var model = cfg.visionModel || "qwen-vl-max";
     var key = cfg.visionKey || cfg.key || "";
     if (!key) return Promise.reject(new Error("图片识别要百炼的 Key（DeepSeek 不支持看图）"));
@@ -17355,7 +17452,7 @@ function norm(s) {
         }]
       })
     }).then(function (r) {
-      if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+      if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
       return r.json();
     }).then(function (j) {
       var c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
@@ -17369,7 +17466,7 @@ function norm(s) {
   function aiMake(topic, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
-    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var base = normBase(cfg.base || p.base);
     var model = cfg.model || p.model;
     if (!base || !key0(cfg)) return Promise.reject(new Error("还没配 AI 接口"));
     var sys = "你是 333 教育综合命题老师。仿统考风格出 1 道主观题，只输出 JSON。";
@@ -17381,7 +17478,7 @@ function norm(s) {
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + cfg.key },
       body: JSON.stringify({ model: model, temperature: 0.7, messages: [{ role: "system", content: sys }, { role: "user", content: user }] })
     }).then(function (r) {
-      if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 100)); });
+      if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
       return r.json();
     }).then(function (j) {
       var c = j.choices[0].message.content;
@@ -17497,7 +17594,7 @@ function norm(s) {
   function aiFree(item, answer, local, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
-    var base = (cfg.base || p.base || "").replace(/\/+$/, "");
+    var base = normBase(cfg.base || p.base);
     var model = cfg.model || p.model;
     var key = cfg.key || "";
     if (!key) return Promise.reject(new Error("还没填 API Key / Base URL（AI 设置里填 DeepSeek 或百炼）"));
@@ -17521,7 +17618,7 @@ function norm(s) {
       body: JSON.stringify({ model: model, temperature: 0.2, messages: [{ role: "system", content: sys }, { role: "user", content: user }] })
     })
       .then(function (r) {
-        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + "：" + t.slice(0, 120)); });
+        if (!r.ok) return r.text().then(function (t) { throw new Error(explainErr(r.status, t)); });
         return r.json();
       })
       .then(function (j) {
@@ -17535,6 +17632,25 @@ function norm(s) {
 
   function key0(cfg) { return !!(cfg && cfg.key); }
 
+  // 浏览器直连最常见的是 TypeError: Failed to fetch（断网/跨域/代理），翻成人话
+  function friendly(e) {
+    var m = String((e && e.message) || e);
+    if (/Failed to fetch|NetworkError|Load failed|Network request failed|fetch failed/i.test(m)) {
+      return new Error("请求没发出去：先看网络（换 Wi-Fi / 关代理），再确认这个接口允许浏览器直连。Base 或模型名不会导致这个错。");
+    }
+    return e;
+  }
+
+  function guard(fn) {
+    return function () {
+      try {
+        return fn.apply(null, arguments).catch(function (e) { throw friendly(e); });
+      } catch (e) {
+        return Promise.reject(friendly(e));
+      }
+    };
+  }
+
   root.K3G = {
     norm: norm,
     cover: cover,
@@ -17544,11 +17660,15 @@ function norm(s) {
     providers: PROVIDERS,
     aiConfig: aiConfig,
     aiSave: aiSave,
-    aiGrade: aiGrade,
-    aiVision: aiVision,
-    aiMake: aiMake,
+    normBase: normBase,
+    explainErr: explainErr,
+    aiGrade: guard(aiGrade),
+    aiVision: guard(aiVision),
+    aiMake: guard(aiMake),
     freeItem: freeItem,
-    aiFree: aiFree,
+    aiFree: guard(aiFree),
+    aiPing: guard(aiPing),
+    aiChat: guard(aiChat),
     similarItems: similarItems
   };
 })(typeof window !== "undefined" ? window : globalThis);
@@ -19582,69 +19702,167 @@ function ztMetaOf(y) {
   };
 
   /* ---------- AI 设置 ---------- */
+  var AID = { prov: "", drafts: {} };
+
+  var AI_FALLBACK = {
+    deepseek: { name: "DeepSeek 官方", base: "https://api.deepseek.com/v1", model: "deepseek-chat", models: ["deepseek-chat", "deepseek-reasoner"] },
+    bailian: { name: "阿里云百炼", base: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus", models: ["qwen-plus", "qwen-max", "qwen-flash", "qwen-turbo", "qwen3-max", "qwen3-235b-a22b", "deepseek-v3.1", "kimi-k2-instruct", "glm-4.6"] },
+    custom: { name: "自定义", base: "", model: "", models: [] }
+  };
+
+  function aiPidList(PR) {
+    var out = [];
+    ["deepseek", "bailian"].forEach(function (k) { if (PR[k]) out.push(k); });
+    return out;
+  }
+
   A3.views.aigrade = function () {
-    var cfg = G ? G.aiConfig() : {};
-    var PR = (G && G.providers) || { deepseek: { label: "DeepSeek 官方", base: "https://api.deepseek.com/v1", model: "deepseek-chat" }, bailian: { label: "阿里云百炼", base: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus" } };
-    var pid = cfg.provider || "deepseek";
+    var cfg = (G && G.aiConfig && G.aiConfig()) || {};
+    var PR = (G && G.providers) || AI_FALLBACK;
+    var cur = AID.prov || cfg.provider || "deepseek";
+    if (!PR[cur]) cur = "deepseek";
+    AID.prov = cur;
+
+    function draftOf(pid) {
+      if (!AID.drafts[pid]) {
+        var p = PR[pid] || {};
+        var same = (cfg.provider || "deepseek") === pid;
+        AID.drafts[pid] = {
+          base: (same && cfg.base) || p.base || "",
+          model: (same && cfg.model) || p.model || "",
+          key: (same && cfg.key) || ""
+        };
+      }
+      return AID.drafts[pid];
+    }
+    var d0 = draftOf(cur);
+
     var h = '<section class="hero"><h2>🤖 AI 接口设置</h2><p>本地判分不走网络；配好 Key 才能用「AI 精批」。Key 只存在这台设备的浏览器里，不会上传到别处。</p></section>';
     h += '<div class="mcard gr-cfg">';
-    h += '<div class="gr-chips">';
-    Object.keys(PR).forEach(function (k) {
-      if (k === "custom") return;
-      h += '<button class="chip ' + (pid === k ? "active" : "") + '" data-ap="' + k + '">' + esc(PR[k].label || k) + "</button>";
+
+    h += '<div class="gr-chips" id="aiProv">';
+    aiPidList(PR).forEach(function (k) {
+      h += '<button type="button" class="chip' + (cur === k ? " active" : "") + '" data-ap="' + k + '">' + esc(PR[k].name || PR[k].label || k) + "</button>";
     });
-    h += '<button class="chip ' + (pid === "custom" ? "active" : "") + '" data-ap="custom">自定义</button></div>';
-    h += '<label class="gr-lab">Base URL</label><input id="aiBase" class="ks-input" placeholder="https://api.deepseek.com/v1" value="' + esc(cfg.base || PR[pid].base || "") + '">';
-    h += '<label class="gr-lab">模型名</label><input id="aiModel" class="ks-input" placeholder="deepseek-chat" value="' + esc(cfg.model || PR[pid].model || "") + '">';
-    h += '<label class="gr-lab">API Key</label><input id="aiKey" type="password" class="ks-input" placeholder="sk-…" value="' + esc(cfg.key || "") + '">';
-    h += '<div class="gr-tools"><button class="btn" id="aiSave">保存</button><button class="ghost-btn" id="aiTest">测试连接</button><button class="ghost-btn" data-go="grader">去批改</button></div>';
-    h += '<div class="gr-msg" id="aiMsg">' + esc(S.msg) + "</div>";
-    h += '<ul class="gr-tips"><li>DeepSeek：在 platform.deepseek.com 生成 Key，Base 用 <code>https://api.deepseek.com/v1</code>，模型 <code>deepseek-chat</code>。</li>';
-    h += '<li>百炼：在 dashscope.console.aliyun.com 生成 Key，Base 用 <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>，模型 <code>qwen-plus</code>。</li>';
-    h += "<li>手机/平板上如果接口报跨域或网络错误，多半是网络问题，不影响本地判分。</li></ul></div>";
+    h += '<button type="button" class="chip' + (cur === "custom" ? " active" : "") + '" data-ap="custom">自定义</button>';
+    h += "</div>";
+
+    h += '<div class="gr-endp" id="aiEndp"></div>';
+
+    h += '<label class="gr-lab" for="aiBase">Base URL</label>';
+    h += '<input id="aiBase" class="ks-input" spellcheck="false" autocapitalize="off" placeholder="https://…/v1" value="' + esc(d0.base) + '">';
+
+    h += '<label class="gr-lab" for="aiModel">模型名 <span class="gr-lab-tip">点下面任意一个，或直接填（百炼全部模型都行）</span></label>';
+    h += '<input id="aiModel" class="ks-input" spellcheck="false" autocapitalize="off" list="aiModelList" placeholder="qwen-plus" value="' + esc(d0.model) + '">';
+    h += '<datalist id="aiModelList"></datalist>';
+    h += '<div class="gr-models" id="aiModelChips"></div>';
+
+    h += '<label class="gr-lab" for="aiKey">API Key</label>';
+    h += '<input id="aiKey" type="password" class="ks-input" spellcheck="false" autocapitalize="off" placeholder="sk-…" value="' + esc(d0.key) + '">';
+
+    h += '<div class="gr-tools"><button type="button" class="btn" id="aiSave">保存</button><button type="button" class="ghost-btn" id="aiTest">测试连接</button><button type="button" class="ghost-btn" data-go="grader">去批改</button></div>';
+    h += '<div class="gr-msg" id="aiMsg"></div>';
+    h += '<ul class="gr-tips">';
+    h += '<li><b>DeepSeek</b>：platform.deepseek.com 生成 Key，Base <code>https://api.deepseek.com/v1</code>，模型 <code>deepseek-chat</code>。</li>';
+    h += '<li><b>百炼</b>：dashscope.console.aliyun.com 生成 Key，Base <code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>，模型填控制台上的名字即可：<code>qwen-plus</code> <code>qwen-max</code> <code>qwen3-max</code> <code>deepseek-v3.1</code> <code>kimi-k2-instruct</code> 都行。</li>';
+    h += '<li>报 <b>401</b> 九成是 Key 和 Base 不是一家（百炼 Key 配了 DeepSeek 地址）；报 <b>404</b> 是模型名写错。</li>';
+    h += '<li>手机/平板上如果提示网络错误，多半是当前网络不通，不影响本地判分。</li>';
+    h += "</ul></div>";
+
     app.innerHTML = h;
-    var sel = pid;
-    app.querySelectorAll("[data-ap]").forEach(function (b) {
+
+    var elBase = document.getElementById("aiBase");
+    var elModel = document.getElementById("aiModel");
+    var elKey = document.getElementById("aiKey");
+    var elMsg = document.getElementById("aiMsg");
+    var elEndp = document.getElementById("aiEndp");
+    var elChips = document.getElementById("aiModelChips");
+    var elList = document.getElementById("aiModelList");
+
+    function readCfg() {
+      return { provider: cur, base: elBase.value.trim(), model: elModel.value.trim(), key: elKey.value.trim() };
+    }
+    function setMsg(t, kind) {
+      elMsg.className = "gr-msg" + (kind ? " " + kind : "");
+      elMsg.textContent = t || "";
+      S.msg = t || "";
+    }
+    function paint() {
+      Array.prototype.forEach.call(app.querySelectorAll("[data-ap]"), function (b) {
+        b.className = "chip" + (b.getAttribute("data-ap") === cur ? " active" : "");
+      });
+      var p = PR[cur] || {};
+      var base = (G && G.normBase ? G.normBase(elBase.value) : elBase.value.trim());
+      elEndp.innerHTML = base
+        ? '接口 <code title="' + esc(base + "/chat/completions") + '">' + esc(base) + '</code> · 模型 <code>' + esc(elModel.value.trim() || "—") + "</code>"
+        : "先填 Base URL（百炼：<code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>）";
+      var ms = (p.models || []).slice();
+      elList.innerHTML = ms.map(function (m) { return '<option value="' + esc(m) + '">'; }).join("");
+      elChips.innerHTML = ms.map(function (m) {
+        return '<button type="button" class="chip' + (elModel.value.trim() === m ? " active" : "") + '" data-am="' + esc(m) + '">' + esc(m) + "</button>";
+      }).join("");
+      Array.prototype.forEach.call(elChips.querySelectorAll("[data-am]"), function (b) {
+        b.onclick = function () {
+          elModel.value = b.getAttribute("data-am");
+          paint();
+          setMsg("");
+        };
+      });
+    }
+
+    Array.prototype.forEach.call(app.querySelectorAll("[data-ap]"), function (b) {
       b.onclick = function () {
-        sel = b.getAttribute("data-ap");
-        var base = document.getElementById("aiBase"), model = document.getElementById("aiModel");
-        if (sel !== "custom") {
-          if (base) base.value = PR[sel].base;
-          if (model) model.value = PR[sel].model;
-        }
-        S._prov = sel;
-        A3.render();
+        var next = b.getAttribute("data-ap");
+        if (next === cur) return;
+        AID.drafts[cur] = { base: elBase.value.trim(), model: elModel.value.trim(), key: elKey.value.trim() };
+        cur = next;
+        AID.prov = next;
+        var d = draftOf(next);
+        elBase.value = d.base;
+        elModel.value = d.model;
+        elKey.value = d.key;
+        paint();
+        setMsg("");
       };
     });
-    if (S._prov) sel = S._prov;
+
     var sv = document.getElementById("aiSave");
-    if (sv) sv.onclick = function () {
-      var c = {
-        provider: sel,
-        base: document.getElementById("aiBase").value.trim(),
-        model: document.getElementById("aiModel").value.trim(),
-        key: document.getElementById("aiKey").value.trim()
-      };
+    sv.onclick = function () {
+      var c = readCfg();
       G.aiSave(c);
-      S.msg = "已保存到本机。";
-      A3.render();
+      AID.drafts[c.provider] = { base: c.base, model: c.model, key: c.key };
+      setMsg("已保存到本机（只存在这台设备的浏览器里）。", "ok");
     };
+
     var ts = document.getElementById("aiTest");
-    if (ts) ts.onclick = function () {
-      var c = { provider: sel, base: document.getElementById("aiBase").value.trim(), model: document.getElementById("aiModel").value.trim(), key: document.getElementById("aiKey").value.trim() };
-      if (!c.key) { S.msg = "先填 Key"; A3.render(); return; }
+    ts.onclick = function () {
+      var c = readCfg();
+      if (!c.key) { setMsg("先填 API Key。", "bad"); elKey.focus(); return; }
+      if (!c.base) { setMsg("先填 Base URL。", "bad"); elBase.focus(); return; }
+      if (!c.model) { setMsg("先填模型名。", "bad"); elModel.focus(); return; }
       G.aiSave(c);
-      var it = items()[0];
-      S.msg = "正在测试…";
-      A3.render();
-      G.aiGrade(it, sampleFill(it), { score: 8 }, c).then(function (o) {
-        S.msg = "连接成功，模型回了 " + (o.score != null ? o.score + " 分" : "内容") + "。";
-        A3.render();
-      }).catch(function (e) { S.msg = "失败：" + (e && e.message || e); A3.render(); });
+      AID.drafts[c.provider] = { base: c.base, model: c.model, key: c.key };
+      AID.busy = true;
+      setMsg("正在连接 " + c.model + " …", "wait");
+      ts.disabled = true;
+      G.aiPing(c).then(function (r) {
+        AID.busy = false;
+        ts.disabled = false;
+        setMsg("✓ 通了：模型 " + r.model + "，用时 " + (r.ms / 1000).toFixed(1) + " 秒，回了「" + r.text + "」。现在可以去批改页点「AI 精批」。", "ok");
+      }).catch(function (e) {
+        AID.busy = false;
+        ts.disabled = false;
+        setMsg("失败：" + (e && e.message ? e.message : e), "bad");
+      });
     };
+
+    paint();
+    if (S.msg) { elMsg.className = "gr-msg"; elMsg.textContent = S.msg; }
     A3.bindGo();
   };
+
 })();
+
 </script>
   <script>
 /* assets/views-bills.js */
