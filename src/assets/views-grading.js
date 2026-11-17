@@ -79,7 +79,7 @@
     var avg = 0;
     if (recs.length) {
       var s = 0;
-      recs.forEach(function (r) { s += (r.rate || 0); });
+      recs.forEach(function (r) { var rv = +r.rate || 0; s += (rv > 1 ? rv / 100 : rv); });
       avg = Math.round((s / recs.length) * 100);
     }
     var h = '<div class="gr-stats">';
@@ -150,7 +150,9 @@
     var h = '<div class="section-title"><h3>自定义题目</h3></div><div class="mcard gr-custom">';
     h += '<label class="gr-lab">题目 / 材料</label><textarea id="grCq" rows="4" placeholder="把题目或材料粘进来…">' + esc(S.cq) + "</textarea>";
     h += '<label class="gr-lab">材料（可选）</label><textarea id="grCmat" rows="3" placeholder="材料分析题把材料原文粘这里">' + esc(S.cmat) + "</textarea>";
-    h += '<div class="gr-row"><label class="gr-lab">满分</label><input id="grCfull" type="number" min="5" max="40" value="' + (+S.cfull || 15) + '"><button class="ghost-btn" id="grCBack">返回题库</button></div>';
+    h += '<div class="gr-row"><label class="gr-lab">满分</label><input id="grCfull" type="number" min="5" max="40" value="' + (+S.cfull || 15) + '"></div>';
+    h += '<div class="gr-tools"><button class="btn" id="grCustomGo">开始批改这道题</button><button class="ghost-btn" id="grCBack">返回题库</button></div>';
+    h += '<div class="gr-msg">自主题没有采分点库：本地判分只看结构、篇幅与材料引用，想要内容分请配 AI Key 用「AI 精批」。</div>';
     h += "</div>";
     return h;
   }

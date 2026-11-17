@@ -106,7 +106,7 @@
     var answerBig = bigrams(answerNorm);
     var len = answerNorm.length;
     var full = Number(item.full) || 15;
-    var isMat = item.kind === "material";
+    var isMat = item.kind === "material" && String(item.mat || "").trim().length > 40; // 自定义材料题没贴材料时按论述口径
     var isQ200 = item.kind === "q200";
 
     var pts = item.pts || [];
@@ -177,11 +177,12 @@
     }
 
     var parts = [];
-    var wIdea = isQ200 ? 0.6 : 0.5;
+    var noPts = pts.length === 0; // 自定义题：没有采分点库
+    var wIdea = noPts ? 0 : isQ200 ? 0.6 : 0.5;
     var wArg = 1 - wIdea;
 
     var idea = full * wIdea * Math.min(1, ptRatio * 1.06);
-    parts.push({ k: isMat ? "原理·采分点" : isQ200 ? "要点·采分点" : "观点·采分点", got: idea, max: full * wIdea });
+    if (!noPts) parts.push({ k: isMat ? "原理·采分点" : isQ200 ? "要点·采分点" : "观点·采分点", got: idea, max: full * wIdea });
 
     var argLabel = isMat ? "结合材料（引原句 " + quotes.length + " 处）" : isQ200 ? "展开（分点 " + nPts + " / 均 " + avgLen + " 字）" : "论证（分点 " + nPts + " / 均 " + avgLen + " 字 / 因果 " + causal + " 处）";
     var argR2 = isMat ? matR : argR;
@@ -191,11 +192,12 @@
     score = idea + arg;
 
     // 结构与篇幅校正
-    var expect = isMat ? 480 : item.kind === "q200" ? 260 : 520;
+    var expect = isMat ? 480 : item.kind === "q200" ? 260 : (noPts ? 320 : 520);
     var cap = full;
     var notes = [];
+    if (noPts) notes.push("这是自定义题，没有采分点库：本地只按「结构 + 篇幅" + (isMat ? " + 材料引用" : "") + "」给分，内容分请用 AI 精批。");
     if (nPts === 0 && len > 40) { cap = Math.min(cap, full * 0.85); notes.push("没有分点编号，阅卷老师找不到采分点，结构分按 85% 计。"); }
-    if (len < expect * 0.45) { cap = Math.min(cap, full * 0.62); notes.push("篇幅 " + len + " 字，明显短于该题建议的 " + expect + " 字，论证不完整。"); }
+    if (len < expect * 0.45) { cap = Math.min(cap, full * (noPts ? 0.78 : 0.62)); notes.push("篇幅 " + len + " 字，明显短于该题建议的 " + expect + " 字，论证不完整。"); }
     else if (len < expect * 0.7) { cap = Math.min(cap, full * 0.85); notes.push("篇幅偏短（" + len + " 字），建议写到 " + expect + " 字左右。"); }
     if (isMat && quotes.length === 0) { notes.push("全篇没有引用材料原句：材料题「原理分 + 材料分」各半，不引材料最高只能拿一半。"); }
     if (!isMat && (item.type === "启示影响") && heads4 < 3) { notes.push("启示/影响类建议用 4 字小标题（如「教育目的」「教育内容」）分维度写，当前只有 " + heads4 + " 个。"); }
@@ -230,7 +232,7 @@
     return {
       score: final,
       full: full,
-      rate: Math.round(rate * 100),
+      rate: Math.round(rate * 1000) / 1000,
       parts: parts.map(function (p) { return { k: p.k, got: Math.round(p.got * 10) / 10, max: Math.round(p.max * 10) / 10 }; }),
       hits: hits,
       misses: misses,
@@ -387,6 +389,15 @@
     };
   }
 
+  // 统一走 Promise：fetch 缺失或同步抛错时也变成 reject，避免按钮静默失效
+  function post(url, opt) {
+    return new Promise(function (resolve, reject) {
+      try {
+        fetch(url, opt).then(resolve, reject);
+      } catch (e) { reject(e); }
+    });
+  }
+
   function aiGrade(item, answer, local, cfg) {
     cfg = cfg || aiConfig();
     var p = PROVIDERS[cfg.provider || "deepseek"] || PROVIDERS.deepseek;
@@ -397,7 +408,7 @@
       return Promise.reject(new Error("还没填 API Key / Base URL"));
     }
     var pr = buildPrompt(item, answer, local);
-    return fetch(base + "/chat/completions", {
+    return post(base + "/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
       body: JSON.stringify({
@@ -428,7 +439,7 @@
     var key = cfg.visionKey || cfg.key || "";
     if (!key) return Promise.reject(new Error("图片识别要百炼的 Key（DeepSeek 不支持看图）"));
     var prompt = "把这张图片里的" + (hint || "题目或手写答题内容") + "完整转录成文字，保留分点编号和换行；看不清的字用□代替；不要加解释。";
-    return fetch(base + "/chat/completions", {
+    return post(base + "/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
       body: JSON.stringify({
@@ -464,7 +475,7 @@
     var user = "主题：" + (topic || "教育综合高频考点") + "\n" +
       '输出 {"q":"题干","asks":"答题要求","type":"启示影响|人物思想|制度法案|理论论述|材料分析","full":15,"pts":[{"t":"采分点小标题","body":"该点要写的内容","w":3}],"sample":"50 字示范答案"}\n' +
       "要求：15 分题给 5 个点左右、权重和=15；题干像真题，不要出现「请背诵」。";
-    return fetch(base + "/chat/completions", {
+    return post(base + "/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + cfg.key },
       body: JSON.stringify({ model: model, temperature: 0.7, messages: [{ role: "system", content: sys }, { role: "user", content: user }] })
