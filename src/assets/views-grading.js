@@ -297,7 +297,9 @@
       '<button class="ghost-btn" id="grAI">🤖 AI 精批</button>' +
       '<button class="ghost-btn" id="grSample">填参考要点</button>' +
       '<button class="ghost-btn" id="grClear">清空</button></div>';
-    h += '<div class="gr-msg" id="grMsg">' + esc(S.msg) + "</div></div>";
+    h += '<div class="gr-msg" id="grMsg">' + esc(S.msg) +
+      (S.msg && /AI|Key/.test(S.msg) ? ' <a class="ghost-btn" href="#aigrade">去填 AI Key →</a>' : "") +
+      "</div></div>";
 
     if (S.res) {
       h += resultHtml(it, S.res);
