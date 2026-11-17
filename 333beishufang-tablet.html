@@ -19794,7 +19794,7 @@ function ztMetaOf(y) {
       var p = PR[cur] || {};
       var base = (G && G.normBase ? G.normBase(elBase.value) : elBase.value.trim());
       elEndp.innerHTML = base
-        ? '接口 <code title="' + esc(base + "/chat/completions") + '">' + esc(base) + '</code> · 模型 <code>' + esc(elModel.value.trim() || "—") + "</code>"
+        ? '接口 <code title="' + esc(base + "/chat/completions") + '">' + esc(base.replace(/^https?:\/\//, "")) + '</code> · 模型 <code>' + esc(elModel.value.trim() || "—") + "</code>"
         : "先填 Base URL（百炼：<code>https://dashscope.aliyuncs.com/compatible-mode/v1</code>）";
       var ms = (p.models || []).slice();
       elList.innerHTML = ms.map(function (m) { return '<option value="' + esc(m) + '">'; }).join("");
